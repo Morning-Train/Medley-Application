@@ -1,0 +1,24 @@
+{
+    "name": "morningtrain/wp-application",
+    "description": "description",
+    "minimum-stability": "stable",
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "MathiasHøjrupMunk",
+            "email": "email@example.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Morningtrain\\WP\\Application\\": "src/"
+        }
+    },
+    "require": {
+        "illuminate/container": "^8|^9",
+        "php": "^8.0",
+        "illuminate/support": "^8|^9",
+        "illuminate/config": "^8|^9",
+        "illuminate/cache": "^8|^9"
+    }
+}

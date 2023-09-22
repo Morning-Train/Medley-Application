@@ -1,6 +1,6 @@
 <?php
 
-namespace Morningtrain\WP\Application;
+namespace MorningMedley\Application;
 
 use Illuminate\Config\Repository;
 use Illuminate\Container\Container;
@@ -221,7 +221,7 @@ class Application extends Container
     public function registerConfiguredProviders()
     {
         $providers = Collection::make($this->make('config')->get('app.providers'));
-        foreach ($providers as $provider){
+        foreach ($providers as $provider) {
             $this->register($provider);
         }
     }

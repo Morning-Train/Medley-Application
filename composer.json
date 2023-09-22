@@ -1,5 +1,5 @@
 {
-    "name": "morningtrain/wp-application",
+    "name": "morningmedley/application-container",
     "description": "description",
     "minimum-stability": "stable",
     "license": "proprietary",
@@ -11,7 +11,7 @@
     ],
     "autoload": {
         "psr-4": {
-            "Morningtrain\\WP\\Application\\": "src/"
+            "MorningMedley\\Application\\": "src/"
         }
     },
     "require": {

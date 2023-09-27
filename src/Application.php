@@ -46,6 +46,13 @@ class Application extends Container
     protected $bootedCallbacks = [];
 
     /**
+     * The array of terminating callbacks.
+     *
+     * @var callable[]
+     */
+    protected $terminatingCallbacks = [];
+
+    /**
      * All of the registered service providers.
      *
      * @var ServiceProvider[]
@@ -93,6 +100,9 @@ class Application extends Container
         $this->instance('app', $this);
 
         $this->instance(Container::class, $this);
+
+        $this->bind('files', \Illuminate\Filesystem\Filesystem::class);
+        $this->bind('events', \Illuminate\Events\Dispatcher::class);
     }
 
     public function loadConfig()
@@ -600,4 +610,34 @@ class Application extends Container
     {
         return isset($this->deferredServices[$service]);
     }
+
+    /**
+     * Register a terminating callback with the application.
+     *
+     * @param  callable|string  $callback
+     * @return $this
+     */
+    public function terminating($callback)
+    {
+        $this->terminatingCallbacks[] = $callback;
+
+        return $this;
+    }
+
+    /**
+     * Terminate the application.
+     *
+     * @return void
+     */
+    public function terminate()
+    {
+        $index = 0;
+
+        while ($index < count($this->terminatingCallbacks)) {
+            $this->call($this->terminatingCallbacks[$index]);
+
+            $index++;
+        }
+    }
+
 }

@@ -2,13 +2,17 @@
 
 namespace MorningMedley\Application;
 
+use Illuminate\Contracts\Foundation\CachesConfiguration;
+
 use Illuminate\Config\Repository;
 use Illuminate\Container\Container;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\ServiceProvider;
+use Symfony\Component\Cache\Adapter\PhpFilesAdapter;
+use Symfony\Contracts\Cache\ItemInterface;
 
-class Application extends Container
+class Application extends Container implements CachesConfiguration
 {
     /**
      * The base path for the Laravel installation.
@@ -73,6 +77,8 @@ class Application extends Container
      */
     protected $deferredServices = [];
 
+    protected bool $configIsCached = true;
+
     /**
      * Create a new Illuminate application instance.
      *
@@ -84,8 +90,11 @@ class Application extends Container
         $this->basePath = $basePath;
 
         $this->registerBaseBindings();
-        $this->loadConfig();
+        $this->loadBaseConfig();
         $this->registerConfiguredProviders();
+        if(!$this->configurationIsCached()){
+            $this->updateConfigCache();
+        }
     }
 
     /**
@@ -103,17 +112,30 @@ class Application extends Container
 
         $this->bind('files', \Illuminate\Filesystem\Filesystem::class);
         $this->bind('events', \Illuminate\Events\Dispatcher::class);
+        $this->singleton('file.cache',
+            fn() => new PhpFilesAdapter('config', DAY_IN_SECONDS, $this->getCachedConfigPath())
+        );
     }
 
-    public function loadConfig()
+    public function loadBaseConfig()
     {
-        $file = $this->joinPaths($this->configPath(), 'config.php');
-        if (! file_exists($file)) {
-            return;
-        }
+        $cache = $this->make('file.cache');
+        $config = $cache->get('config', [$this, 'parseConfig']);
 
         /** @var Repository $config */
-        $this->singleton('config', fn() => new \Illuminate\Config\Repository(require $file));
+        $this->singleton('config', fn() => new \Illuminate\Config\Repository($config));
+    }
+
+    public function parseConfig(ItemInterface $item): array
+    {
+        // Since we are currently generating the cache content we can assume that it is not currently cached..
+        $this->configIsCached = false;
+        $file = $this->joinPaths($this->configPath(), 'config.php');
+        if (! file_exists($file)) {
+            return [];
+        }
+
+        return require $file;
     }
 
     /**
@@ -640,4 +662,25 @@ class Application extends Container
         }
     }
 
+    public function configurationIsCached()
+    {
+        return $this->configIsCached;
+    }
+
+    public function updateConfigCache()
+    {
+        $cache = $this->make('file.cache');
+        $cache->delete('config');
+        $cache->get('config', fn() => $this['config']->all());
+    }
+
+    public function getCachedConfigPath()
+    {
+        return $this->basePath('_cache');
+    }
+
+    public function getCachedServicesPath()
+    {
+        // TODO: Implement getCachedServicesPath() method.
+    }
 }

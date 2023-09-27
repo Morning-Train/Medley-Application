@@ -6,10 +6,12 @@ use Illuminate\Contracts\Foundation\CachesConfiguration;
 
 use Illuminate\Config\Repository;
 use Illuminate\Container\Container;
+use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\ServiceProvider;
 use Symfony\Component\Cache\Adapter\PhpFilesAdapter;
+use Symfony\Component\Finder\Finder;
 use Symfony\Contracts\Cache\ItemInterface;
 
 class Application extends Container implements CachesConfiguration
@@ -92,7 +94,7 @@ class Application extends Container implements CachesConfiguration
         $this->registerBaseBindings();
         $this->loadBaseConfig();
         $this->registerConfiguredProviders();
-        if(!$this->configurationIsCached()){
+        if (! $this->configurationIsCached()) {
             $this->updateConfigCache();
         }
     }
@@ -130,12 +132,19 @@ class Application extends Container implements CachesConfiguration
     {
         // Since we are currently generating the cache content we can assume that it is not currently cached..
         $this->configIsCached = false;
-        $file = $this->joinPaths($this->configPath(), 'config.php');
-        if (! file_exists($file)) {
-            return [];
+
+        /** @var Filesystem $fileSystem */
+        $fileSystem = $this->make('files');
+        $configFiles = $fileSystem->allFiles($this->configPath());
+        $dottedConfig = [];
+        foreach ($configFiles as $configFile) {
+            $parts = explode('/', $configFile->getRelativePath());
+            $parts[] = $configFile->getFilenameWithoutExtension();
+            $key = implode('.', array_filter($parts));
+            $dottedConfig[$key] = require $configFile->getRealPath();
         }
 
-        return require $file;
+        return Arr::undot($dottedConfig);
     }
 
     /**

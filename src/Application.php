@@ -125,13 +125,17 @@ class Application extends Container implements CachesConfiguration
     {
         $cache = $this->makeWith('file.cache', ['namespace' => 'config', 'defaultLifetime' => DAY_IN_SECONDS]);
 
-        $config = $cache->get('config', [$this, 'parseConfig']);
+        if ($this->isProduction()) {
+            $config = $cache->get('config', [$this, 'parseConfig']);
+        } else {
+            $config = $this->parseConfig();
+        }
 
         /** @var Repository $config */
-        $this->singleton('config', fn() => new \Illuminate\Config\Repository($config));
+        $this->singleton('config', fn() => new \Illuminate\Config\Repository((array) $config));
     }
 
-    public function parseConfig(ItemInterface $item): array
+    public function parseConfig(?ItemInterface $item = null): array
     {
         // Since we are currently generating the cache content we can assume that it is not currently cached..
         $this->configIsCached = false;

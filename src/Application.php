@@ -6,6 +6,7 @@ use Illuminate\Contracts\Foundation\CachesConfiguration;
 
 use Illuminate\Config\Repository;
 use Illuminate\Container\Container;
+use Illuminate\Events\Dispatcher;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
@@ -21,21 +22,21 @@ class Application extends Container implements CachesConfiguration
      *
      * @var string
      */
-    protected $basePath;
+    protected string $basePath;
 
     /**
      * Indicates if the application has been bootstrapped before.
      *
      * @var bool
      */
-    protected $hasBeenBootstrapped = false;
+    protected bool $hasBeenBootstrapped = false;
 
     /**
      * Indicates if the application has "booted".
      *
      * @var bool
      */
-    protected $booted = false;
+    protected bool $booted = false;
 
     /**
      * The array of booting callbacks.
@@ -63,21 +64,21 @@ class Application extends Container implements CachesConfiguration
      *
      * @var ServiceProvider[]
      */
-    protected $serviceProviders = [];
+    protected array $serviceProviders = [];
 
     /**
      * The names of the loaded service providers.
      *
      * @var array
      */
-    protected $loadedProviders = [];
+    protected array $loadedProviders = [];
 
     /**
      * The deferred services and their providers.
      *
      * @var array
      */
-    protected $deferredServices = [];
+    protected array $deferredServices = [];
 
     protected bool $configIsCached = true;
 
@@ -87,12 +88,12 @@ class Application extends Container implements CachesConfiguration
      * @param  string  $basePath
      * @return void
      */
-    public function __construct($basePath)
+    public function __construct(string $basePath)
     {
         $this->basePath = $basePath;
 
         $this->registerBaseBindings();
-        $this->loadBaseConfig();
+        $this->registerCachedConfig();
         $this->registerConfiguredProviders();
         if (! $this->configurationIsCached()) {
             $this->updateConfigCache();
@@ -104,7 +105,7 @@ class Application extends Container implements CachesConfiguration
      *
      * @return void
      */
-    protected function registerBaseBindings()
+    protected function registerBaseBindings(): void
     {
         static::setInstance($this);
 
@@ -112,16 +113,18 @@ class Application extends Container implements CachesConfiguration
 
         $this->instance(Container::class, $this);
 
-        $this->bind('files', \Illuminate\Filesystem\Filesystem::class);
-        $this->bind('events', \Illuminate\Events\Dispatcher::class);
-        $this->singleton('file.cache',
-            fn() => new PhpFilesAdapter('config', DAY_IN_SECONDS, $this->getCachedConfigPath())
-        );
+        $this->bind('files', Filesystem::class);
+        $this->bind('events', Dispatcher::class);
+        $this->bind('file.cache', PhpFilesAdapter::class);
+        $this->when(PhpFilesAdapter::class)
+            ->needs('$directory')
+            ->give($this->getCachedConfigPath());
     }
 
-    public function loadBaseConfig()
+    public function registerCachedConfig(): void
     {
-        $cache = $this->make('file.cache');
+        $cache = $this->makeWith('file.cache', ['namespace' => 'config', 'defaultLifetime' => DAY_IN_SECONDS]);
+
         $config = $cache->get('config', [$this, 'parseConfig']);
 
         /** @var Repository $config */
@@ -153,7 +156,7 @@ class Application extends Container implements CachesConfiguration
      * @param  string[]  $bootstrappers
      * @return void
      */
-    public function bootstrapWith(array $bootstrappers)
+    public function bootstrapWith(array $bootstrappers): void
     {
         $this->hasBeenBootstrapped = true;
 
@@ -173,7 +176,7 @@ class Application extends Container implements CachesConfiguration
      * @param  \Closure  $callback
      * @return void
      */
-    public function beforeBootstrapping($bootstrapper, Closure $callback)
+    public function beforeBootstrapping($bootstrapper, \Closure $callback): void
     {
         $this['events']->listen('bootstrapping: ' . $bootstrapper, $callback);
     }
@@ -185,7 +188,7 @@ class Application extends Container implements CachesConfiguration
      * @param  \Closure  $callback
      * @return void
      */
-    public function afterBootstrapping($bootstrapper, Closure $callback)
+    public function afterBootstrapping($bootstrapper, \Closure $callback): void
     {
         $this['events']->listen('bootstrapped: ' . $bootstrapper, $callback);
     }
@@ -195,7 +198,7 @@ class Application extends Container implements CachesConfiguration
      *
      * @return bool
      */
-    public function hasBeenBootstrapped()
+    public function hasBeenBootstrapped(): bool
     {
         return $this->hasBeenBootstrapped;
     }
@@ -206,7 +209,7 @@ class Application extends Container implements CachesConfiguration
      * @param  string  $path
      * @return string
      */
-    public function basePath($path = '')
+    public function basePath($path = ''): string
     {
         return $this->joinPaths($this->basePath, $path);
     }
@@ -217,7 +220,7 @@ class Application extends Container implements CachesConfiguration
      * @param  string  $path
      * @return string
      */
-    public function configPath($path = '')
+    public function configPath($path = ''): string
     {
         return $this->joinPaths($this->basePath('config'), $path);
     }
@@ -229,7 +232,7 @@ class Application extends Container implements CachesConfiguration
      * @param  string  $path
      * @return string
      */
-    public function joinPaths($basePath, $path = '')
+    public function joinPaths($basePath, $path = ''): string
     {
         return $basePath . ($path != '' ? DIRECTORY_SEPARATOR . ltrim($path, DIRECTORY_SEPARATOR) : '');
     }
@@ -239,9 +242,9 @@ class Application extends Container implements CachesConfiguration
      *
      * @return bool
      */
-    public function isLocal()
+    public function isLocal(): bool
     {
-        return $this['env'] === 'local'; // TODO:
+        return \wp_get_environment_type() === 'local';
     }
 
     /**
@@ -249,9 +252,9 @@ class Application extends Container implements CachesConfiguration
      *
      * @return bool
      */
-    public function isProduction()
+    public function isProduction(): bool
     {
-        return $this['env'] === 'production'; // TODO:
+        return \wp_get_environment_type() === 'production';
     }
 
     /**
@@ -259,7 +262,7 @@ class Application extends Container implements CachesConfiguration
      *
      * @return void
      */
-    public function registerConfiguredProviders()
+    public function registerConfiguredProviders(): void
     {
         $providers = Collection::make($this->make('config')->get('app.providers'));
         foreach ($providers as $provider) {
@@ -274,7 +277,7 @@ class Application extends Container implements CachesConfiguration
      * @param  bool  $force
      * @return ServiceProvider
      */
-    public function register($provider, $force = false)
+    public function register($provider, $force = false): ServiceProvider
     {
         if (($registered = $this->getProvider($provider)) && ! $force) {
             return $registered;
@@ -324,7 +327,7 @@ class Application extends Container implements CachesConfiguration
      * @param  ServiceProvider|string  $provider
      * @return ServiceProvider|null
      */
-    public function getProvider($provider)
+    public function getProvider($provider): ?ServiceProvider
     {
         return array_values($this->getProviders($provider))[0] ?? null;
     }
@@ -335,7 +338,7 @@ class Application extends Container implements CachesConfiguration
      * @param  ServiceProvider|string  $provider
      * @return array
      */
-    public function getProviders($provider)
+    public function getProviders($provider): array
     {
         $name = is_string($provider) ? $provider : get_class($provider);
 
@@ -348,7 +351,7 @@ class Application extends Container implements CachesConfiguration
      * @param  string  $provider
      * @return ServiceProvider
      */
-    public function resolveProvider($provider)
+    public function resolveProvider($provider): ServiceProvider
     {
         return new $provider($this);
     }
@@ -359,7 +362,7 @@ class Application extends Container implements CachesConfiguration
      * @param  ServiceProvider  $provider
      * @return void
      */
-    protected function markAsRegistered($provider)
+    protected function markAsRegistered($provider): void
     {
         $this->serviceProviders[] = $provider;
 
@@ -371,7 +374,7 @@ class Application extends Container implements CachesConfiguration
      *
      * @return void
      */
-    public function loadDeferredProviders()
+    public function loadDeferredProviders(): void
     {
         // We will simply spin through each of the deferred providers and register each
         // one and boot them if the application has booted. This should make each of
@@ -389,7 +392,7 @@ class Application extends Container implements CachesConfiguration
      * @param  string  $service
      * @return void
      */
-    public function loadDeferredProvider($service)
+    public function loadDeferredProvider($service): void
     {
         if (! $this->isDeferredService($service)) {
             return;
@@ -412,7 +415,7 @@ class Application extends Container implements CachesConfiguration
      * @param  string|null  $service
      * @return void
      */
-    public function registerDeferredProvider($provider, $service = null)
+    public function registerDeferredProvider($provider, $service = null): void
     {
         // Once the provider that provides the deferred service has been registered we
         // will remove it from our local list of the deferred services with related
@@ -437,7 +440,7 @@ class Application extends Container implements CachesConfiguration
      * @param  array  $parameters
      * @return mixed
      */
-    public function make($abstract, array $parameters = [])
+    public function make($abstract, array $parameters = []): mixed
     {
         $this->loadDeferredProviderIfNeeded($abstract = $this->getAlias($abstract));
 
@@ -452,7 +455,7 @@ class Application extends Container implements CachesConfiguration
      * @param  bool  $raiseEvents
      * @return mixed
      */
-    protected function resolve($abstract, $parameters = [], $raiseEvents = true)
+    protected function resolve($abstract, $parameters = [], $raiseEvents = true): mixed
     {
         $this->loadDeferredProviderIfNeeded($abstract = $this->getAlias($abstract));
 
@@ -465,7 +468,7 @@ class Application extends Container implements CachesConfiguration
      * @param  string  $abstract
      * @return void
      */
-    protected function loadDeferredProviderIfNeeded($abstract)
+    protected function loadDeferredProviderIfNeeded($abstract): void
     {
         if ($this->isDeferredService($abstract) && ! isset($this->instances[$abstract])) {
             $this->loadDeferredProvider($abstract);
@@ -478,7 +481,7 @@ class Application extends Container implements CachesConfiguration
      * @param  string  $abstract
      * @return bool
      */
-    public function bound($abstract)
+    public function bound($abstract): bool
     {
         return $this->isDeferredService($abstract) || parent::bound($abstract);
     }
@@ -488,7 +491,7 @@ class Application extends Container implements CachesConfiguration
      *
      * @return bool
      */
-    public function isBooted()
+    public function isBooted(): bool
     {
         return $this->booted;
     }
@@ -498,7 +501,7 @@ class Application extends Container implements CachesConfiguration
      *
      * @return void
      */
-    public function boot()
+    public function boot(): void
     {
         if ($this->isBooted()) {
             return;
@@ -524,7 +527,7 @@ class Application extends Container implements CachesConfiguration
      * @param  ServiceProvider  $provider
      * @return void
      */
-    protected function bootProvider(ServiceProvider $provider)
+    protected function bootProvider(ServiceProvider $provider): void
     {
         $provider->callBootingCallbacks();
 
@@ -541,7 +544,7 @@ class Application extends Container implements CachesConfiguration
      * @param  callable  $callback
      * @return void
      */
-    public function booting($callback)
+    public function booting($callback): void
     {
         $this->bootingCallbacks[] = $callback;
     }
@@ -552,7 +555,7 @@ class Application extends Container implements CachesConfiguration
      * @param  callable  $callback
      * @return void
      */
-    public function booted($callback)
+    public function booted($callback): void
     {
         $this->bootedCallbacks[] = $callback;
 
@@ -567,7 +570,7 @@ class Application extends Container implements CachesConfiguration
      * @param  callable[]  $callbacks
      * @return void
      */
-    protected function fireAppCallbacks(array &$callbacks)
+    protected function fireAppCallbacks(array &$callbacks): void
     {
         $index = 0;
 
@@ -583,7 +586,7 @@ class Application extends Container implements CachesConfiguration
      *
      * @return array
      */
-    public function getLoadedProviders()
+    public function getLoadedProviders(): array
     {
         return $this->loadedProviders;
     }
@@ -594,7 +597,7 @@ class Application extends Container implements CachesConfiguration
      * @param  string  $provider
      * @return bool
      */
-    public function providerIsLoaded(string $provider)
+    public function providerIsLoaded(string $provider): bool
     {
         return isset($this->loadedProviders[$provider]);
     }
@@ -604,7 +607,7 @@ class Application extends Container implements CachesConfiguration
      *
      * @return array
      */
-    public function getDeferredServices()
+    public function getDeferredServices(): array
     {
         return $this->deferredServices;
     }
@@ -615,7 +618,7 @@ class Application extends Container implements CachesConfiguration
      * @param  array  $services
      * @return void
      */
-    public function setDeferredServices(array $services)
+    public function setDeferredServices(array $services): void
     {
         $this->deferredServices = $services;
     }
@@ -626,7 +629,7 @@ class Application extends Container implements CachesConfiguration
      * @param  array  $services
      * @return void
      */
-    public function addDeferredServices(array $services)
+    public function addDeferredServices(array $services): void
     {
         $this->deferredServices = array_merge($this->deferredServices, $services);
     }
@@ -637,7 +640,7 @@ class Application extends Container implements CachesConfiguration
      * @param  string  $service
      * @return bool
      */
-    public function isDeferredService($service)
+    public function isDeferredService($service): bool
     {
         return isset($this->deferredServices[$service]);
     }
@@ -648,7 +651,7 @@ class Application extends Container implements CachesConfiguration
      * @param  callable|string  $callback
      * @return $this
      */
-    public function terminating($callback)
+    public function terminating($callback): static
     {
         $this->terminatingCallbacks[] = $callback;
 
@@ -660,7 +663,7 @@ class Application extends Container implements CachesConfiguration
      *
      * @return void
      */
-    public function terminate()
+    public function terminate(): void
     {
         $index = 0;
 
@@ -671,19 +674,19 @@ class Application extends Container implements CachesConfiguration
         }
     }
 
-    public function configurationIsCached()
+    public function configurationIsCached(): bool
     {
         return $this->configIsCached;
     }
 
-    public function updateConfigCache()
+    public function updateConfigCache(): void
     {
-        $cache = $this->make('file.cache');
+        $cache = $this->makeWith('file.cache', ['namespace' => 'config', 'defaultLifetime' => DAY_IN_SECONDS]);
         $cache->delete('config');
         $cache->get('config', fn() => $this['config']->all());
     }
 
-    public function getCachedConfigPath()
+    public function getCachedConfigPath(): string
     {
         return $this->basePath('_cache');
     }

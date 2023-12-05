@@ -98,6 +98,9 @@ class Application extends Container implements CachesConfiguration
         if (! $this->configurationIsCached()) {
             $this->updateConfigCache();
         }
+
+        $GLOBALS['medleyApp'] = $this;
+        require __DIR__ . "/globals.php";
     }
 
     /**

@@ -90,6 +90,9 @@ class Application extends Container implements CachesConfiguration
      */
     public function __construct(string $basePath)
     {
+        $GLOBALS['medleyApp'] = $this;
+        require __DIR__ . "/globals.php";
+
         $this->basePath = $basePath;
 
         $this->registerBaseBindings();
@@ -98,9 +101,6 @@ class Application extends Container implements CachesConfiguration
         if (! $this->configurationIsCached()) {
             $this->updateConfigCache();
         }
-
-        $GLOBALS['medleyApp'] = $this;
-        require __DIR__ . "/globals.php";
     }
 
     /**

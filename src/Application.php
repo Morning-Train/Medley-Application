@@ -126,9 +126,8 @@ class Application extends Container implements CachesConfiguration
 
     public function registerCachedConfig(): void
     {
-        $cache = $this->makeWith('file.cache', ['namespace' => 'config', 'defaultLifetime' => DAY_IN_SECONDS]);
-
         if ($this->isProduction()) {
+            $cache = $this->makeWith('file.cache', ['namespace' => 'config', 'defaultLifetime' => DAY_IN_SECONDS]);
             $config = $cache->get('config', [$this, 'parseConfig']);
         } else {
             $config = $this->parseConfig();

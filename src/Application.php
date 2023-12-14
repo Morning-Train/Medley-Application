@@ -8,6 +8,7 @@ use Illuminate\Config\Repository;
 use Illuminate\Container\Container;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Filesystem\Filesystem;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\ServiceProvider;
@@ -116,18 +117,20 @@ class Application extends Container implements CachesConfiguration
 
         $this->instance(Container::class, $this);
 
+        $this->singleton('filecachemanager', FileCacheManager::class);
+        $this->bind('cli', Cli::class);
         $this->bind('files', Filesystem::class);
         $this->bind('events', Dispatcher::class);
-        $this->bind('file.cache', PhpFilesAdapter::class);
-        $this->when(PhpFilesAdapter::class)
-            ->needs('$directory')
-            ->give($this->getCachedConfigPath());
+
+        if(class_exists("\WP_CLI")){
+            \WP_CLI::add_command('medley', $this->app->make('cli'));
+        }
     }
 
     public function registerCachedConfig(): void
     {
         if ($this->isProduction()) {
-            $cache = $this->makeWith('file.cache', ['namespace' => 'config', 'defaultLifetime' => DAY_IN_SECONDS]);
+            $cache = $this->make('filecachemanager')->registerCache('config');
             $config = $cache->get('config', [$this, 'parseConfig']);
         } else {
             $config = $this->parseConfig();
@@ -687,7 +690,7 @@ class Application extends Container implements CachesConfiguration
 
     public function updateConfigCache(): void
     {
-        $cache = $this->makeWith('file.cache', ['namespace' => 'config', 'defaultLifetime' => DAY_IN_SECONDS]);
+        $cache = $this->make('filecachemanager')->getCache('config');
         $cache->delete('config');
         $cache->get('config', fn() => $this['config']->all());
     }

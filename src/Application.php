@@ -87,12 +87,14 @@ class Application extends Container implements CachesConfiguration
      * Create a new Illuminate application instance.
      *
      * @param  string  $basePath
-     * @return void
+     * @param  string  $appId // In case you need multiple apps on the same site, then make sure to use different appIds. The \MorningMedley\Functions refer to the 'medleyApp' instance. Each app is added, by ID, to $GLOBALS
      */
-    public function __construct(string $basePath)
+    public function __construct(string $basePath, string $appId = 'medleyApp')
     {
-        $GLOBALS['medleyApp'] = $this;
-        require __DIR__ . "/globals.php";
+        $GLOBALS[$appId] = $this;
+        if ($appId === 'medleyApp') {
+            require __DIR__ . "/globals.php";
+        }
 
         $this->basePath = $basePath;
 
@@ -122,7 +124,7 @@ class Application extends Container implements CachesConfiguration
         $this->bind('files', Filesystem::class);
         $this->bind('events', Dispatcher::class);
 
-        if(class_exists("\WP_CLI")){
+        if (class_exists("\WP_CLI")) {
             \WP_CLI::add_command('medley', $this->app->make('cli'));
         }
     }

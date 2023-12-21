@@ -15,10 +15,10 @@
         }
     },
     "require": {
-        "illuminate/container": "^8|^9",
         "php": "^8.0",
-        "illuminate/support": "^8|^9",
-        "illuminate/config": "^8|^9",
-        "illuminate/cache": "^8|^9"
+        "illuminate/container": "^9|^10",
+        "illuminate/support": "^9|^10",
+        "illuminate/config": "^9|^10",
+        "illuminate/cache": "^9|^10"
     }
 }

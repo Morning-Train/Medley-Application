@@ -1,6 +1,11 @@
 {
-    "name": "morningmedley/application-container",
-    "description": "description",
+    "name": "morningmedley/application",
+    "description": "An Illuminate IoC Container for Morningmedley.",
+    "keywords": [
+        "morningmedley",
+        "wordpress",
+        "framework"
+    ],
     "license": "MIT",
     "authors": [
         {

@@ -1,12 +1,11 @@
 {
     "name": "morningmedley/application-container",
     "description": "description",
-    "minimum-stability": "stable",
-    "license": "proprietary",
+    "license": "MIT",
     "authors": [
         {
-            "name": "MathiasHøjrupMunk",
-            "email": "email@example.com"
+            "name": "Mathias Munk",
+            "email": "mh@morningtrain.dk"
         }
     ],
     "autoload": {

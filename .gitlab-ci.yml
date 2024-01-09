@@ -1,8 +1,0 @@
-stages:
-  - publish
-
-include:
-  - remote: https://devops.mtra.in/tpl/v6/packages/gitlab-composer-publish.yml
-
-publish-package:
-  extends: .gitlab-composer-publish

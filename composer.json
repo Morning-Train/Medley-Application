@@ -24,7 +24,7 @@
         "illuminate/support": "^9|^10",
         "illuminate/config": "^9|^10",
         "illuminate/cache": "^9|^10",
-        "symfony/cache": "^6.4",
+        "symfony/cache": "^6",
         "illuminate/filesystem": "^9|^10"
     }
 }

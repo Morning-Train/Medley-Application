@@ -11,7 +11,10 @@ use Illuminate\Filesystem\Filesystem;
 use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Composer;
 use Illuminate\Support\ServiceProvider;
+use MorningMedley\Application\Console\ExceptionHandler;
+use MorningMedley\Application\Console\Kernel;
 use Symfony\Component\Cache\Adapter\PhpFilesAdapter;
 use Symfony\Component\Finder\Finder;
 use Symfony\Contracts\Cache\ItemInterface;
@@ -83,11 +86,13 @@ class Application extends Container implements CachesConfiguration
 
     protected bool $configIsCached = true;
 
+    private string $version = 'Morningmedley:0.1.4';
+
     /**
      * Create a new Illuminate application instance.
      *
      * @param  string  $basePath
-     * @param  string  $appId // In case you need multiple apps on the same site, then make sure to use different appIds. The \MorningMedley\Functions refer to the 'medleyApp' instance. Each app is added, by ID, to $GLOBALS
+     * @param  string  $appId  // In case you need multiple apps on the same site, then make sure to use different appIds. The \MorningMedley\Functions refer to the 'medleyApp' instance. Each app is added, by ID, to $GLOBALS
      */
     public function __construct(string $basePath, string $appId = 'medleyApp')
     {
@@ -100,10 +105,16 @@ class Application extends Container implements CachesConfiguration
 
         $this->registerBaseBindings();
         $this->registerCachedConfig();
+
         $this->registerConfiguredProviders();
         if (! $this->configurationIsCached()) {
             $this->updateConfigCache();
         }
+    }
+
+    public function version(): string
+    {
+        return $this->version;
     }
 
     /**
@@ -118,11 +129,22 @@ class Application extends Container implements CachesConfiguration
         $this->instance('app', $this);
 
         $this->instance(Container::class, $this);
-
         $this->singleton('filecachemanager', FileCacheManager::class);
         $this->bind('cli', Cli::class);
         $this->bind('files', Filesystem::class);
-        $this->bind('events', Dispatcher::class);
+
+        $this->bind(\Illuminate\Contracts\Console\Kernel::class, Kernel::class);
+        $this->singleton(\Illuminate\Contracts\Events\Dispatcher::class, Dispatcher::class);
+        $this->bind(\Illuminate\Contracts\Debug\ExceptionHandler::class, ExceptionHandler::class);
+
+        $this->singleton(\Illuminate\Contracts\Console\Application::class, \Illuminate\Console\Application::class);
+        $this->alias(\Illuminate\Contracts\Console\Application::class, 'artisan');
+
+        $this->alias(\Illuminate\Contracts\Events\Dispatcher::class, 'events');
+
+        $this->singleton('composer', function (Container $app) {
+            return new Composer($app['files'], $app->basePath());
+        });
 
         if (class_exists("\WP_CLI")) {
             \WP_CLI::add_command('medley', $this->app->make('cli'));
@@ -700,6 +722,11 @@ class Application extends Container implements CachesConfiguration
     public function getCachedConfigPath(): string
     {
         return $this->basePath('_cache');
+    }
+
+    public function databasePath(string $path = ''): string
+    {
+        return $this->joinPaths($this->basePath('database'), $path);
     }
 
     public function getCachedServicesPath()

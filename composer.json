@@ -15,8 +15,15 @@
     ],
     "autoload": {
         "psr-4": {
-            "MorningMedley\\Application\\": "src/"
-        }
+            "MorningMedley\\Application\\": "src/MorningMedley/",
+            "Illuminate\\Foundation\\": "src/Foundation/"
+        },
+        "classmap": [
+            "src/MorningMedley.php"
+        ],
+        "files": [
+            "src/Foundation/helpers.php"
+        ]
     },
     "require": {
         "php": "^8.0",
@@ -24,7 +31,9 @@
         "illuminate/support": "^9|^10",
         "illuminate/config": "^9|^10",
         "illuminate/cache": "^9|^10",
+        "illuminate/http": "^9|^10",
         "symfony/cache": "^6",
-        "illuminate/filesystem": "^9|^10"
+        "illuminate/filesystem": "^9|^10",
+        "vlucas/phpdotenv": "^5.4.1"
     }
 }

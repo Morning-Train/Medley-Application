@@ -12,7 +12,10 @@ use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Composer;
+use Illuminate\Support\Env;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
+use MorningMedley\Application\Bootstrap\LoadEnvironmentVariables;
 use MorningMedley\Application\Console\ExceptionHandler;
 use MorningMedley\Application\Console\Kernel;
 use Symfony\Component\Cache\Adapter\PhpFilesAdapter;
@@ -87,6 +90,10 @@ class Application extends Container implements CachesConfiguration
     protected bool $configIsCached = true;
 
     private string $version = 'Morningmedley:0.1.4';
+    private ?bool $isRunningInConsole = null;
+
+    private ?string $environmentFile = null;
+    private ?string $environmentPath = null;
 
     /**
      * Create a new Illuminate application instance.
@@ -101,14 +108,36 @@ class Application extends Container implements CachesConfiguration
             require __DIR__ . "/globals.php";
         }
 
+        $this['env'] = \wp_get_environment_type();
+
         $this->basePath = $basePath;
 
         $this->registerBaseBindings();
         $this->registerCachedConfig();
 
         $this->registerConfiguredProviders();
+        $this->make(LoadEnvironmentVariables::class)->bootstrap($this);
         if (! $this->configurationIsCached()) {
             $this->updateConfigCache();
+        }
+
+        if ($this->runningInConsole()) {
+            \WP_CLI::add_command('artisan', function () {
+                define('LARAVEL_START', microtime(true));
+
+                $argv = array_slice($_SERVER['argv'], 2);
+                /** @var \MorningMedley\Application\Console\Kernel $kernel */
+                $kernel = $this->make(\Illuminate\Contracts\Console\Kernel::class);
+
+                $status = $kernel->handle(
+                    $input = new \Symfony\Component\Console\Input\ArgvInput($argv),
+                    new \Symfony\Component\Console\Output\ConsoleOutput
+                );
+
+                $kernel->terminate($input, $status);
+
+                exit($status);
+            });
         }
     }
 
@@ -130,25 +159,16 @@ class Application extends Container implements CachesConfiguration
 
         $this->instance(Container::class, $this);
         $this->singleton('filecachemanager', FileCacheManager::class);
-        $this->bind('cli', Cli::class);
         $this->bind('files', Filesystem::class);
 
         $this->bind(\Illuminate\Contracts\Console\Kernel::class, Kernel::class);
         $this->singleton(\Illuminate\Contracts\Events\Dispatcher::class, Dispatcher::class);
         $this->bind(\Illuminate\Contracts\Debug\ExceptionHandler::class, ExceptionHandler::class);
 
-        $this->singleton(\Illuminate\Contracts\Console\Application::class, \Illuminate\Console\Application::class);
-        $this->alias(\Illuminate\Contracts\Console\Application::class, 'artisan');
+        //        $this->singleton(\Illuminate\Contracts\Console\Application::class, \Illuminate\Console\Application::class);
+        //        $this->alias(\Illuminate\Contracts\Console\Application::class, 'artisan');
 
         $this->alias(\Illuminate\Contracts\Events\Dispatcher::class, 'events');
-
-        $this->singleton('composer', function (Container $app) {
-            return new Composer($app['files'], $app->basePath());
-        });
-
-        if (class_exists("\WP_CLI")) {
-            \WP_CLI::add_command('medley', $this->app->make('cli'));
-        }
     }
 
     public function registerCachedConfig(): void
@@ -271,13 +291,69 @@ class Application extends Container implements CachesConfiguration
     }
 
     /**
+     * Get the path to the environment file directory.
+     *
+     * @return string
+     */
+    public function environmentPath()
+    {
+        return $this->environmentPath ?: $this->basePath;
+    }
+
+    /**
+     * Set the directory for the environment file.
+     *
+     * @param  string  $path
+     * @return $this
+     */
+    public function useEnvironmentPath($path)
+    {
+        $this->environmentPath = $path;
+
+        return $this;
+    }
+
+    /**
+     * Set the environment file to be loaded during bootstrapping.
+     *
+     * @param  string  $file
+     * @return $this
+     */
+    public function loadEnvironmentFrom($file)
+    {
+        $this->environmentFile = $file;
+
+        return $this;
+    }
+
+    /**
+     * Get the environment file the application is using.
+     *
+     * @return string
+     */
+    public function environmentFile()
+    {
+        return $this->environmentFile ?: '.env';
+    }
+
+    /**
+     * Get the fully qualified path to the environment file.
+     *
+     * @return string
+     */
+    public function environmentFilePath()
+    {
+        return $this->environmentPath() . DIRECTORY_SEPARATOR . $this->environmentFile();
+    }
+
+    /**
      * Determine if the application is in the local environment.
      *
      * @return bool
      */
     public function isLocal(): bool
     {
-        return \wp_get_environment_type() === 'local';
+        return $this['env'] === 'local';
     }
 
     /**
@@ -287,7 +363,38 @@ class Application extends Container implements CachesConfiguration
      */
     public function isProduction(): bool
     {
-        return \wp_get_environment_type() === 'production';
+        return $this['env'] === 'production';
+    }
+
+    /**
+     * Get or check the current application environment.
+     *
+     * @param  string|array  ...$environments
+     * @return string|bool
+     */
+    public function environment(...$environments)
+    {
+        if (count($environments) > 0) {
+            $patterns = is_array($environments[0]) ? $environments[0] : $environments;
+
+            return Str::is($patterns, $this['env']);
+        }
+
+        return $this['env'];
+    }
+
+    /**
+     * Determine if the application is running in the console.
+     *
+     * @return bool
+     */
+    public function runningInConsole()
+    {
+        if ($this->isRunningInConsole === null) {
+            $this->isRunningInConsole = defined('WP_CLI');
+        }
+
+        return $this->isRunningInConsole;
     }
 
     /**

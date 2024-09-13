@@ -18,7 +18,6 @@ class MorningMedley
         );
 
         $this->app->make(Illuminate\Contracts\Http\Kernel::class)->bootstrap();
-        ray($this->app);
     }
 
 }

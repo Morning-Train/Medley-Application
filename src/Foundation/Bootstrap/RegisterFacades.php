@@ -20,7 +20,10 @@ class RegisterFacades
         Facade::clearResolvedInstances();
 
         Facade::setFacadeApplication($app);
-ray($app->make(PackageManifest::class)->aliases());
+        ray('Register Facades');
+//        return;
+        ray($app->make(PackageManifest::class));
+        return;
         AliasLoader::getInstance(array_merge(
             $app->make('config')->get('app.aliases', []),
             $app->make(PackageManifest::class)->aliases()

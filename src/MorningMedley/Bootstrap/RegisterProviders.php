@@ -3,6 +3,8 @@
 namespace MorningMedley\Application\Bootstrap;
 
 use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Events\EventServiceProvider;
+use Illuminate\Filesystem\FilesystemServiceProvider;
 use Illuminate\Support\ServiceProvider;
 
 class RegisterProviders extends \Illuminate\Foundation\Bootstrap\RegisterProviders

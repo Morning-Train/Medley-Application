@@ -76,7 +76,7 @@ class PackageManifest
      */
     public function aliases()
     {
-        return $this->config('aliases');
+        return $this->config('aliases') ?? [];
     }
 
     /**

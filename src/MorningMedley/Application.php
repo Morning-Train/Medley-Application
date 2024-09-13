@@ -259,10 +259,10 @@ class Application extends Container implements ApplicationContract, CachesConfig
         ));
 
         $this->singleton(\Illuminate\Contracts\Events\Dispatcher::class, Dispatcher::class);
-        $this->alias(\Illuminate\Contracts\Events\Dispatcher::class, 'events');
-
-        $this->bind('files', Filesystem::class);
-
+        $this->singleton('files', function () {
+            return new Filesystem;
+        });
+        $this->bind('events',Dispatcher::class);
     }
 
     /**
@@ -1528,7 +1528,7 @@ class Application extends Container implements ApplicationContract, CachesConfig
                      //                         \Illuminate\Contracts\Encryption\Encrypter::class,
                      //                         \Illuminate\Contracts\Encryption\StringEncrypter::class,
                      //                     ],
-                     //                     'events' => [\Illuminate\Events\Dispatcher::class, \Illuminate\Contracts\Events\Dispatcher::class],
+                     'events' => [\Illuminate\Events\Dispatcher::class, \Illuminate\Contracts\Events\Dispatcher::class],
                      'files' => [\Illuminate\Filesystem\Filesystem::class],
                      'filesystem' => [
                          \Illuminate\Filesystem\FilesystemManager::class,

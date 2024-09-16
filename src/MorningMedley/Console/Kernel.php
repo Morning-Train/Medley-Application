@@ -94,6 +94,7 @@ class Kernel implements KernelContract
      * @var string[]
      */
     protected $bootstrappers = [
+        \MorningMedley\Application\Bootstrap\SetDefaultDebugLogFile::class,
         \Illuminate\Foundation\Bootstrap\LoadEnvironmentVariables::class,
         \MorningMedley\Application\Bootstrap\LoadConfiguration::class,
         //        \Illuminate\Foundation\Bootstrap\HandleExceptions::class, // Let WordPress handle this

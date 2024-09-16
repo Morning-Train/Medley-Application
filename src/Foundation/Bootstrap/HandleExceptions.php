@@ -252,7 +252,7 @@ class HandleExceptions
      */
     protected function forwardsTo($method)
     {
-        return fn (...$arguments) => static::$app
+        return fn(...$arguments) => static::$app
             ? $this->{$method}(...$arguments)
             : false;
     }
@@ -327,7 +327,7 @@ class HandleExceptions
     public static function flushHandlersState()
     {
         while (true) {
-            $previousHandler = set_exception_handler(static fn () => null);
+            $previousHandler = set_exception_handler(static fn() => null);
 
             restore_exception_handler();
 
@@ -339,7 +339,7 @@ class HandleExceptions
         }
 
         while (true) {
-            $previousHandler = set_error_handler(static fn () => null);
+            $previousHandler = set_error_handler(static fn() => null);
 
             restore_error_handler();
 
@@ -353,7 +353,7 @@ class HandleExceptions
         if (class_exists(ErrorHandler::class)) {
             $instance = ErrorHandler::instance();
 
-            if ((fn () => $this->enabled ?? false)->call($instance)) {
+            if ((fn() => $this->enabled ?? false)->call($instance)) {
                 $instance->disable();
                 $instance->enable();
             }

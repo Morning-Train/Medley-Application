@@ -822,7 +822,6 @@ class Application extends Container implements ApplicationContract, CachesConfig
             ->partition(fn($provider) => str_starts_with($provider, 'Illuminate\\'));
 
         $providers->splice(1, 0, [$this->make(PackageManifest::class)->providers()]);
-
         (new ProviderRepository($this, new Filesystem, $this->getCachedServicesPath()))
             ->load($providers->collapse()->toArray());
 

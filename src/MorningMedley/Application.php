@@ -48,7 +48,7 @@ class Application extends Container implements ApplicationContract, CachesConfig
      *
      * @var string
      */
-    const VERSION = '0.0.1';
+    const VERSION = '0.2.0';
 
     /**
      * The base path for the Laravel installation.
@@ -737,7 +737,7 @@ class Application extends Container implements ApplicationContract, CachesConfig
      */
     public function detectEnvironment(): string
     {
-        return $this['env'] = \wp_get_environment_type();
+        return $this['env'] = $_ENV['APP_ENV'];
     }
 
     /**

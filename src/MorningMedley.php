@@ -10,10 +10,10 @@ class MorningMedley
     public function __construct(string $baseDir)
     {
         $this->baseDir = $_ENV['APP_BASE_PATH'] ?? $baseDir;
+        $_ENV['APP_ENV'] = \wp_get_environment_type();
 
         $this->app = new \MorningMedley\Application\Application($this->baseDir);
         $this->app->singleton(Illuminate\Contracts\Http\Kernel::class, \MorningMedley\Application\Http\Kernel::class);
-
         $this->app->make(Illuminate\Contracts\Http\Kernel::class)->bootstrap();
 
         if ($this->app->runningInConsole()) {
@@ -30,8 +30,12 @@ class MorningMedley
         $this->app->singleton(Illuminate\Contracts\Console\Kernel::class,
             \MorningMedley\Application\Console\Kernel::class);
         $kernel = $this->app->make(Illuminate\Contracts\Console\Kernel::class);
+        $this->app->bind('composer', \Illuminate\Support\Composer::class);
+        $this->app->register(\MorningMedley\Application\Providers\ArtisanServiceProvider::class);
 
-        $argv = array_slice($_SERVER['argv'], 2); // Trim WordPress args
+        // Find the index of "artisan" and remove anything preceding it, such as "wp"
+        $index = array_search('artisan', $_SERVER['argv']);
+        $argv = array_slice($_SERVER['argv'], $index); // Trim WordPress args
 
         $status = $kernel->handle(
             $input = new Symfony\Component\Console\Input\ArgvInput($argv),

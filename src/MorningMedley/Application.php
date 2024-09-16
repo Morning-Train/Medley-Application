@@ -258,11 +258,11 @@ class Application extends Container implements ApplicationContract, CachesConfig
             new Filesystem, $this->basePath(), $this->getCachedPackagesPath()
         ));
 
-        $this->singleton(\Illuminate\Contracts\Events\Dispatcher::class, Dispatcher::class);
+        $this->singleton('events', fn(Container $app) => new Dispatcher($app));
         $this->singleton('files', function () {
             return new Filesystem;
         });
-        $this->bind('events',Dispatcher::class);
+
     }
 
     /**
@@ -273,7 +273,7 @@ class Application extends Container implements ApplicationContract, CachesConfig
     protected function registerBaseServiceProviders()
     {
 
-        //                $this->register(new EventServiceProvider($this));
+        //        $this->register(new EventServiceProvider($this));
         //        $this->register(new LogServiceProvider($this));
         //        $this->register(new ContextServiceProvider($this));
         //        $this->register(new RoutingServiceProvider($this));

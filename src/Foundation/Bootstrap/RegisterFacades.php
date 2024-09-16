@@ -4,8 +4,8 @@ namespace Illuminate\Foundation\Bootstrap;
 
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Foundation\AliasLoader;
-use Illuminate\Foundation\PackageManifest;
 use Illuminate\Support\Facades\Facade;
+use MorningMedley\Application\PackageManifest;
 
 class RegisterFacades
 {
@@ -20,10 +20,7 @@ class RegisterFacades
         Facade::clearResolvedInstances();
 
         Facade::setFacadeApplication($app);
-        ray('Register Facades');
-//        return;
-        ray($app->make(PackageManifest::class));
-        return;
+
         AliasLoader::getInstance(array_merge(
             $app->make('config')->get('app.aliases', []),
             $app->make(PackageManifest::class)->aliases()

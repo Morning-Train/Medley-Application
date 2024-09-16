@@ -23,7 +23,7 @@ class Kernel implements KernelContract
     protected $bootstrappers = [
         \Illuminate\Foundation\Bootstrap\LoadEnvironmentVariables::class,
         \MorningMedley\Application\Bootstrap\LoadConfiguration::class,
-//        \Illuminate\Foundation\Bootstrap\HandleExceptions::class,
+//        \Illuminate\Foundation\Bootstrap\HandleExceptions::class, // Let WordPress handle these
         \Illuminate\Foundation\Bootstrap\RegisterFacades::class,
         \MorningMedley\Application\Bootstrap\RegisterProviders::class,
         \Illuminate\Foundation\Bootstrap\BootProviders::class,

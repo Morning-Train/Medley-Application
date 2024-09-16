@@ -151,7 +151,6 @@ class AliasLoader
      */
     public function register()
     {
-        ray('ALIASLOADER REGISTER');
         if (! $this->registered) {
             $this->prependToLoaderStack();
 

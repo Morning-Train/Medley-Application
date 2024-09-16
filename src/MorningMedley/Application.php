@@ -226,6 +226,7 @@ class Application extends Container implements ApplicationContract, CachesConfig
         $this->registerBaseBindings();
         $this->registerBaseServiceProviders();
         $this->registerCoreContainerAliases();
+        $this->createBaseDirectories();
     }
 
     /**
@@ -251,10 +252,6 @@ class Application extends Container implements ApplicationContract, CachesConfig
 
         $this->instance(Container::class, $this);
 
-        if (! is_dir(dirname($this->getCachedPackagesPath()))) {
-            mkdir(dirname($this->getCachedPackagesPath()), 0777, true);
-        }
-
         $this->singleton(PackageManifest::class, fn() => new PackageManifest(
             new Filesystem, $this->basePath(), $this->getCachedPackagesPath()
         ));
@@ -278,6 +275,16 @@ class Application extends Container implements ApplicationContract, CachesConfig
         //        $this->register(new LogServiceProvider($this));
         //        $this->register(new ContextServiceProvider($this));
         //        $this->register(new RoutingServiceProvider($this));
+    }
+
+    public function createBaseDirectories()
+    {
+        if (! is_dir(dirname($this->getCachedPackagesPath()))) {
+            mkdir(dirname($this->getCachedPackagesPath()), 0777, true);
+        }
+        if (! is_dir($this->storagePath())) {
+            mkdir($this->storagePath(), 0777, true);
+        }
     }
 
     /**

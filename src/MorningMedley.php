@@ -13,14 +13,15 @@ class MorningMedley
         $_ENV['APP_ENV'] = \wp_get_environment_type();
 
         $this->app = new \MorningMedley\Application\Application($this->baseDir);
-        $this->app->bind(ExceptionHandlerContract::class,
-            \MorningMedley\Application\Http\ExceptionHandler::class);
         $this->app->singleton(Illuminate\Contracts\Http\Kernel::class, \MorningMedley\Application\Http\Kernel::class);
-        $this->app->make(Illuminate\Contracts\Http\Kernel::class)->bootstrap();
 
         if ($this->app->runningInConsole()) {
             \WP_CLI::add_command('artisan', [$this, 'artisan']);
+        } else {
+            $this->app->bind(ExceptionHandlerContract::class,
+                \MorningMedley\Application\Http\ExceptionHandler::class);
         }
+        $this->app->make(Illuminate\Contracts\Http\Kernel::class)->bootstrap();
     }
 
     public function artisan()

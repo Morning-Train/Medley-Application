@@ -15,7 +15,10 @@ class ExceptionHandler implements \Illuminate\Contracts\Debug\ExceptionHandler
         if (! $this->shouldReport($e)) {
             return;
         }
-        $errorStr = "<pre><h2>A exception occurred.</h2>" . $e->getMessage() . "<br/><hr/><br/>";
+        $errorStr = "<pre>";
+        $errorStr .= "<h2>A exception occurred.</h2>";
+        $errorStr .= $e->getMessage();
+        $errorStr .= "<br/><hr/><br/>";
         $errorStr .= print_r(debug_backtrace(), true);
         $errorStr .= "</pre>";
         \wp_die($errorStr);

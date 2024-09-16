@@ -10,6 +10,7 @@ use Illuminate\Foundation\Console\ConfigClearCommand;
 use Illuminate\Foundation\Console\ConfigPublishCommand;
 use Illuminate\Foundation\Console\ConfigShowCommand;
 use Illuminate\Foundation\Console\EnvironmentCommand;
+use Illuminate\Foundation\Console\PackageDiscoverCommand;
 use Illuminate\Support\ServiceProvider;
 use MorningMedley\Application\Console\ConfigCacheCommand;
 
@@ -20,7 +21,8 @@ class ArtisanServiceProvider extends ServiceProvider implements DeferrableProvid
         'ConfigCache' => ConfigCacheCommand::class,
         'ConfigClear' => ConfigClearCommand::class,
         'ConfigShow' => ConfigShowCommand::class,
-        'Environment' => EnvironmentCommand::class
+        'Environment' => EnvironmentCommand::class,
+        'PackageDiscover' => PackageDiscoverCommand::class,
     ];
 
     protected $devCommands = [

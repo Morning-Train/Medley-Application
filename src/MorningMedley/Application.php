@@ -254,6 +254,7 @@ class Application extends Container implements ApplicationContract, CachesConfig
         if (! is_dir(dirname($this->getCachedPackagesPath()))) {
             mkdir(dirname($this->getCachedPackagesPath()), 0777, true);
         }
+
         $this->singleton(PackageManifest::class, fn() => new PackageManifest(
             new Filesystem, $this->basePath(), $this->getCachedPackagesPath()
         ));
@@ -1590,6 +1591,7 @@ class Application extends Container implements ApplicationContract, CachesConfig
                      //                         \Illuminate\Contracts\Validation\Factory::class,
                      //                     ],
                      //                     'view' => [\Illuminate\View\Factory::class, \Illuminate\Contracts\View\Factory::class],
+                     PackageManifest::class => [\Illuminate\Foundation\PackageManifest::class],
                  ] as $key => $aliases) {
             foreach ($aliases as $alias) {
                 $this->alias($key, $alias);

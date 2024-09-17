@@ -22,6 +22,7 @@ use Illuminate\Support\Env;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Illuminate\Support\Traits\Macroable;
+use MorningMedley\Application\Providers\UrlGeneratorServiceProvider;
 use MorningMedley\Application\Providers\WpContextServiceProvider;
 use MorningMedley\Application\WpContext\ThemeContext;
 use RuntimeException;
@@ -263,6 +264,7 @@ class Application extends Container implements ApplicationContract, CachesConfig
     protected function registerBaseServiceProviders()
     {
         $this->register(new WpContextServiceProvider($this));
+        $this->register(new UrlGeneratorServiceProvider($this));
         //        $this->register(new EventServiceProvider($this));
         //        $this->register(new LogServiceProvider($this));
         //        $this->register(new ContextServiceProvider($this));

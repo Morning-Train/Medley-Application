@@ -40,6 +40,16 @@ class MorningMedley
         $index = array_search('artisan', $_SERVER['argv']);
         $argv = array_slice($_SERVER['argv'], $index); // Trim WordPress args
 
+        // Since WordPress treats the --help flag as the help command with no simple way of telling it to do otherwise,
+        // Hotfix for using --help as --doc
+        if (in_array('--doc', $argv)) {
+            foreach ($argv as $index => $value) {
+                if ($value === '--doc') {
+                    $argv[$index] = '--help';
+                }
+            }
+        }
+
         $status = $kernel->handle(
             $input = new Symfony\Component\Console\Input\ArgvInput($argv),
             new Symfony\Component\Console\Output\ConsoleOutput

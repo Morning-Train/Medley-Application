@@ -24,6 +24,7 @@ class UrlGeneratorServiceProvider extends ServiceProvider implements DeferrableP
     public function boot()
     {
         $this->app->singleton('url', UrlGenerator::class);
+        $this->app->alias('url', \Illuminate\Contracts\Routing\UrlGenerator::class);
     }
 
     public function provides()

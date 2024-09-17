@@ -3,22 +3,16 @@
 namespace MorningMedley\Application;
 
 use Closure;
-use Composer\Autoload\ClassLoader;
 use Illuminate\Container\Container;
 use Illuminate\Contracts\Console\Kernel as ConsoleKernelContract;
 use Illuminate\Contracts\Foundation\Application as ApplicationContract;
 use Illuminate\Contracts\Foundation\CachesConfiguration;
-use Illuminate\Contracts\Foundation\CachesRoutes;
-use Illuminate\Contracts\Foundation\MaintenanceMode as MaintenanceModeContract;
-use Illuminate\Contracts\Http\Kernel as HttpKernelContract;
 use Illuminate\Events\Dispatcher;
-use Illuminate\Events\EventServiceProvider;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Foundation\AliasLoader;
 use Illuminate\Foundation\Bootstrap\LoadEnvironmentVariables;
 use Illuminate\Foundation\Events\LocaleUpdated;
 use Illuminate\Foundation\ProviderRepository;
-use Illuminate\Http\Request;
 use Illuminate\Log\Context\ContextServiceProvider;
 use Illuminate\Log\LogServiceProvider;
 use Illuminate\Routing\RoutingServiceProvider;
@@ -28,14 +22,13 @@ use Illuminate\Support\Env;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Illuminate\Support\Traits\Macroable;
+use MorningMedley\Application\Providers\WpContextServiceProvider;
+use MorningMedley\Application\WpContext\ThemeContext;
 use RuntimeException;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\ConsoleOutput;
-use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
-use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\HttpKernel\HttpKernelInterface;
 
 use function Illuminate\Filesystem\join_paths;
 
@@ -260,7 +253,6 @@ class Application extends Container implements ApplicationContract, CachesConfig
         $this->singleton('files', function () {
             return new Filesystem;
         });
-
     }
 
     /**
@@ -270,7 +262,7 @@ class Application extends Container implements ApplicationContract, CachesConfig
      */
     protected function registerBaseServiceProviders()
     {
-
+        $this->register(new WpContextServiceProvider($this));
         //        $this->register(new EventServiceProvider($this));
         //        $this->register(new LogServiceProvider($this));
         //        $this->register(new ContextServiceProvider($this));

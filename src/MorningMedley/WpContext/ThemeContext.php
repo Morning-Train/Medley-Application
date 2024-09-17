@@ -1,0 +1,14 @@
+<?php
+
+namespace MorningMedley\Application\WpContext;
+
+class ThemeContext implements WpContextContract
+{
+    public function __construct(
+        public readonly string $name,
+        public readonly string $description,
+        public readonly string $version,
+        public readonly string $textDomain
+    ) {
+    }
+}

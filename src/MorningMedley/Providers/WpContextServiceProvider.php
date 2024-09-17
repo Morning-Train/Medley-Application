@@ -27,7 +27,7 @@ class WpContextServiceProvider extends ServiceProvider implements DeferrableProv
 
             return;
         }
-        
+
         $this->generateConfig();
         $this->setWpContext();
     }
@@ -47,10 +47,11 @@ class WpContextServiceProvider extends ServiceProvider implements DeferrableProv
     protected function generateConfig()
     {
         if (file_exists($this->app->basePath('style.css'))) {
+            $stylePath = $this->app->basePath('style.css');
             $styleContents = file_get_contents($this->app->basePath('style.css'));
             if (str_contains($styleContents, 'Theme Name:')) {
                 // This is a theme
-                $this->setConfigByTheme($styleContents);
+                $this->setConfigByTheme($this->app->basePath('style.css'));
 
                 return;
             }
@@ -61,24 +62,28 @@ class WpContextServiceProvider extends ServiceProvider implements DeferrableProv
         ];
         foreach ($pluginFiles as $pluginFile) {
             if (file_exists($pluginFile)) {
-                $this->setConfigByPlugin(file_get_contents($pluginFile));
+                $this->setConfigByPlugin($pluginFile);
                 break;
             }
         }
     }
 
-    protected function setConfigByTheme(string $styleContents)
+    protected function setConfigByTheme(string $stylePath)
     {
+        $styleContents = file_get_contents($stylePath);
         $this->app['config']->set('app.wpcontext.name', $this->extractParamValue($styleContents, 'Theme Name'));
+        $this->app['config']->set('app.wpcontext.url', \trailingslashit(\get_theme_root_uri($styleContents)));
         $this->app['config']->set('app.wpcontext.description', $this->extractParamValue($styleContents, 'Description'));
         $this->app['config']->set('app.wpcontext.version', $this->extractParamValue($styleContents, 'Version'));
         $this->app['config']->set('app.wpcontext.textDomain', $this->extractParamValue($styleContents, 'Text Domain'));
         $this->app['config']->set('app.wpcontext.type', 'theme');
     }
 
-    protected function setConfigByPlugin(string $pluginFileContents)
+    protected function setConfigByPlugin(string $pluginFilePath)
     {
+        $pluginFileContents = file_get_contents($pluginFilePath);
         $this->app['config']->set('app.wpcontext.name', $this->extractParamValue($pluginFileContents, 'Plugin Name'));
+        $this->app['config']->set('app.wpcontext.url', \trailingslashit(\plugin_dir_url($pluginFilePath)));
         $this->app['config']->set('app.wpcontext.description',
             $this->extractParamValue($pluginFileContents, 'Description'));
         $this->app['config']->set('app.wpcontext.version', $this->extractParamValue($pluginFileContents, 'Version'));

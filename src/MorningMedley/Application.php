@@ -3,6 +3,7 @@
 namespace MorningMedley\Application;
 
 use Closure;
+use Illuminate\Cache\CacheServiceProvider;
 use Illuminate\Container\Container;
 use Illuminate\Contracts\Console\Kernel as ConsoleKernelContract;
 use Illuminate\Contracts\Foundation\Application as ApplicationContract;
@@ -265,6 +266,8 @@ class Application extends Container implements ApplicationContract, CachesConfig
     {
         $this->register(new WpContextServiceProvider($this));
         $this->register(new UrlGeneratorServiceProvider($this));
+        $this->register(new CacheServiceProvider($this));
+        $this->register(new LogServiceProvider($this));
         //        $this->register(new EventServiceProvider($this));
         //        $this->register(new LogServiceProvider($this));
         //        $this->register(new ContextServiceProvider($this));
@@ -1498,12 +1501,12 @@ class Application extends Container implements ApplicationContract, CachesConfig
                      //                     'auth' => [\Illuminate\Auth\AuthManager::class, \Illuminate\Contracts\Auth\Factory::class],
                      //                     'auth.driver' => [\Illuminate\Contracts\Auth\Guard::class],
                      //                     'blade.compiler' => [\Illuminate\View\Compilers\BladeCompiler::class],
-                     //                     'cache' => [\Illuminate\Cache\CacheManager::class, \Illuminate\Contracts\Cache\Factory::class],
-                     //                     'cache.store' => [
-                     //                         \Illuminate\Cache\Repository::class,
-                     //                         \Illuminate\Contracts\Cache\Repository::class,
-                     //                         \Psr\SimpleCache\CacheInterface::class,
-                     //                     ],
+                     'cache' => [\Illuminate\Cache\CacheManager::class, \Illuminate\Contracts\Cache\Factory::class],
+                     'cache.store' => [
+                         \Illuminate\Cache\Repository::class,
+                         \Illuminate\Contracts\Cache\Repository::class,
+                         \Psr\SimpleCache\CacheInterface::class,
+                     ],
                      //                     'cache.psr6' => [
                      //                         \Symfony\Component\Cache\Adapter\Psr16Adapter::class,
                      //                         \Symfony\Component\Cache\Adapter\AdapterInterface::class,
@@ -1514,20 +1517,6 @@ class Application extends Container implements ApplicationContract, CachesConfig
                      //                         \Illuminate\Cookie\CookieJar::class,
                      //                         \Illuminate\Contracts\Cookie\Factory::class,
                      //                         \Illuminate\Contracts\Cookie\QueueingFactory::class,
-                     //                     ],
-                     //                     'db' => [
-                     //                         \Illuminate\Database\DatabaseManager::class,
-                     //                         \Illuminate\Database\ConnectionResolverInterface::class,
-                     //                     ],
-                     //                     'db.connection' => [
-                     //                         \Illuminate\Database\Connection::class,
-                     //                         \Illuminate\Database\ConnectionInterface::class,
-                     //                     ],
-                     //                     'db.schema' => [\Illuminate\Database\Schema\Builder::class],
-                     //                     'encrypter' => [
-                     //                         \Illuminate\Encryption\Encrypter::class,
-                     //                         \Illuminate\Contracts\Encryption\Encrypter::class,
-                     //                         \Illuminate\Contracts\Encryption\StringEncrypter::class,
                      //                     ],
                      'events' => [\Illuminate\Events\Dispatcher::class, \Illuminate\Contracts\Events\Dispatcher::class],
                      'files' => [\Illuminate\Filesystem\Filesystem::class],
@@ -1543,7 +1532,7 @@ class Application extends Container implements ApplicationContract, CachesConfig
                      //                         \Illuminate\Translation\Translator::class,
                      //                         \Illuminate\Contracts\Translation\Translator::class,
                      //                     ],
-                     //                     'log' => [\Illuminate\Log\LogManager::class, \Psr\Log\LoggerInterface::class],
+                                          'log' => [\Illuminate\Log\LogManager::class, \Psr\Log\LoggerInterface::class],
                      //                     'mail.manager' => [\Illuminate\Mail\MailManager::class, \Illuminate\Contracts\Mail\Factory::class],
                      //                     'mailer' => [
                      //                         \Illuminate\Mail\Mailer::class,
@@ -1558,13 +1547,6 @@ class Application extends Container implements ApplicationContract, CachesConfig
                      //                         \Illuminate\Auth\Passwords\PasswordBroker::class,
                      //                         \Illuminate\Contracts\Auth\PasswordBroker::class,
                      //                     ],
-                     //                     'queue' => [
-                     //                         \Illuminate\Queue\QueueManager::class,
-                     //                         \Illuminate\Contracts\Queue\Factory::class,
-                     //                         \Illuminate\Contracts\Queue\Monitor::class,
-                     //                     ],
-                     //                     'queue.connection' => [\Illuminate\Contracts\Queue\Queue::class],
-                     //                     'queue.failer' => [\Illuminate\Queue\Failed\FailedJobProviderInterface::class],
                      //                     'redirect' => [\Illuminate\Routing\Redirector::class],
                      //                     'redis' => [\Illuminate\Redis\RedisManager::class, \Illuminate\Contracts\Redis\Factory::class],
                      //                     'redis.connection' => [
@@ -1582,15 +1564,13 @@ class Application extends Container implements ApplicationContract, CachesConfig
                      //                         \Illuminate\Session\Store::class,
                      //                         \Illuminate\Contracts\Session\Session::class,
                      //                     ],
-                     //                     'url' => [
-                     //                         \Illuminate\Routing\UrlGenerator::class,
-                     //                         \Illuminate\Contracts\Routing\UrlGenerator::class,
-                     //                     ],
-                     //                     'validator' => [
+                     'url' => [
+                         \Illuminate\Contracts\Routing\UrlGenerator::class,
+                     ],
+                     //                                          'validator' => [
                      //                         \Illuminate\Validation\Factory::class,
                      //                         \Illuminate\Contracts\Validation\Factory::class,
                      //                     ],
-                     //                     'view' => [\Illuminate\View\Factory::class, \Illuminate\Contracts\View\Factory::class],
                      PackageManifest::class => [\Illuminate\Foundation\PackageManifest::class],
                  ] as $key => $aliases) {
             foreach ($aliases as $alias) {

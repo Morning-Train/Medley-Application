@@ -25,7 +25,7 @@ class ConfigCacheCommand extends \Illuminate\Foundation\Console\ConfigCacheComma
 
         $app->useStoragePath($this->laravel->storagePath());
 
-//        $app->make(ConsoleKernelContract::class)->bootstrap();
+        $app->make(ConsoleKernelContract::class)->bootstrap();
 
         return $app['config']->all();
     }

@@ -13,28 +13,55 @@ class MorningMedley
         $_ENV['APP_ENV'] = \wp_get_environment_type();
 
         $this->app = new \MorningMedley\Application\Application($this->baseDir);
-        $this->app->singleton(Illuminate\Contracts\Http\Kernel::class, \MorningMedley\Application\Http\Kernel::class);
 
         if ($this->app->runningInConsole()) {
-            \WP_CLI::add_command('artisan', [$this, 'artisan']);
+            $this->bootConsole();
         } else {
-            $this->app->bind(ExceptionHandlerContract::class,
-                \MorningMedley\Application\Http\ExceptionHandler::class);
+            $this->bootHttp();
         }
-        $this->app->make(Illuminate\Contracts\Http\Kernel::class)->bootstrap();
+    }
+
+    protected function bootHttp()
+    {
+        $this->app->singleton(
+            Illuminate\Contracts\Http\Kernel::class,
+            \MorningMedley\Application\Http\Kernel::class);
+
+        $this->app->bind(
+            ExceptionHandlerContract::class,
+            \MorningMedley\Application\Http\ExceptionHandler::class);
+
+        $this->app->make(Illuminate\Contracts\Http\Kernel::class)
+            ->bootstrap();
+
+    }
+
+    protected function bootConsole()
+    {
+        $this->app->singleton(
+            Illuminate\Contracts\Console\Kernel::class,
+            \MorningMedley\Application\Console\Kernel::class);
+
+        $this->app->bind(
+            ExceptionHandlerContract::class,
+            \MorningMedley\Application\Console\ExceptionHandler::class);
+
+        $this->app->bind(
+            'composer',
+            \Illuminate\Support\Composer::class);
+
+        $this->app->register(
+            \MorningMedley\Application\Providers\ArtisanServiceProvider::class);
+
+        // Kernel is bootstrapped in its handle() method
+        \WP_CLI::add_command('artisan', [$this, 'artisan']);
     }
 
     public function artisan()
     {
         define('LARAVEL_START', microtime(true));
 
-        $this->app->bind(ExceptionHandlerContract::class,
-            \MorningMedley\Application\Console\ExceptionHandler::class);
-        $this->app->singleton(Illuminate\Contracts\Console\Kernel::class,
-            \MorningMedley\Application\Console\Kernel::class);
         $kernel = $this->app->make(Illuminate\Contracts\Console\Kernel::class);
-        $this->app->bind('composer', \Illuminate\Support\Composer::class);
-        $this->app->register(\MorningMedley\Application\Providers\ArtisanServiceProvider::class);
 
         // Find the index of "artisan" and remove anything preceding it, such as "wp"
         $index = array_search('artisan', $_SERVER['argv']);
@@ -54,7 +81,9 @@ class MorningMedley
             $input = new Symfony\Component\Console\Input\ArgvInput($argv),
             new Symfony\Component\Console\Output\ConsoleOutput
         );
+
         $kernel->terminate($input, $status);
+
         exit($status);
     }
 }

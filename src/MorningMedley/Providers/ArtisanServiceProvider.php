@@ -2,6 +2,7 @@
 
 namespace MorningMedley\Application\Providers;
 
+use Illuminate\Cache\Console\CacheTableCommand;
 use Illuminate\Console\Signals;
 use Illuminate\Contracts\Support\DeferrableProvider;
 use Illuminate\Foundation\Console\AboutCommand;
@@ -23,6 +24,8 @@ class ArtisanServiceProvider extends ServiceProvider implements DeferrableProvid
         'ConfigShow' => ConfigShowCommand::class,
         'Environment' => EnvironmentCommand::class,
         'PackageDiscover' => PackageDiscoverCommand::class,
+        'CacheTable' => CacheTableCommand::class,
+
     ];
 
     protected $devCommands = [
@@ -80,6 +83,13 @@ class ArtisanServiceProvider extends ServiceProvider implements DeferrableProvid
     {
         $this->app->singleton(ConfigClearCommand::class, function ($app) {
             return new ConfigClearCommand($app['files']);
+        });
+    }
+
+    protected function registerCacheTableCommand()
+    {
+        $this->app->singleton(CacheTableCommand::class, function ($app) {
+            return new CacheTableCommand($app['files']);
         });
     }
 

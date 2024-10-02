@@ -23,8 +23,11 @@ return [
             'path' => storage_path('framework/cache/data'),
         ],
 
+        'transient' => [
+            'driver' => 'transient',
+        ],
+
     ],
 
     'prefix' => env('CACHE_PREFIX', Str::slug(env('APP_NAME', 'medley'), '_') . '_cache'),
-
 ];

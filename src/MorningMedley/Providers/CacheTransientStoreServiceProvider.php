@@ -12,7 +12,7 @@ class CacheTransientStoreServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app['cache']->extend('transient', function (Application $application) {
-            $prefix = $this->app['config']->get('cache.prefix');
+            $prefix = $application['config']->get('cache.prefix');
 
             return $application['cache']->repository(new CacheTransientStore($prefix));
         });

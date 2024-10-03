@@ -34,7 +34,6 @@
         "illuminate/http": "^11.23",
         "illuminate/filesystem": "^11.23",
         "illuminate/log": "^11.23",
-        "symfony/cache": "^v7",
         "vlucas/phpdotenv": "^5.4.1"
     }
 }

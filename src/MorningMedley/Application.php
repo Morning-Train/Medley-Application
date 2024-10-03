@@ -9,6 +9,7 @@ use Illuminate\Contracts\Console\Kernel as ConsoleKernelContract;
 use Illuminate\Contracts\Foundation\Application as ApplicationContract;
 use Illuminate\Contracts\Foundation\CachesConfiguration;
 use Illuminate\Events\Dispatcher;
+use Illuminate\Events\EventServiceProvider;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Foundation\AliasLoader;
 use Illuminate\Foundation\Bootstrap\LoadEnvironmentVariables;
@@ -270,10 +271,8 @@ class Application extends Container implements ApplicationContract, CachesConfig
         $this->register(new CacheServiceProvider($this));
         $this->register(new LogServiceProvider($this));
         $this->register(new CacheTransientStoreServiceProvider($this));
-        //        $this->register(new EventServiceProvider($this));
-        //        $this->register(new LogServiceProvider($this));
         //        $this->register(new ContextServiceProvider($this));
-        //        $this->register(new RoutingServiceProvider($this));
+//                $this->register(new RoutingServiceProvider($this));
     }
 
     public function createBaseDirectories()
@@ -1534,7 +1533,7 @@ class Application extends Container implements ApplicationContract, CachesConfig
                      //                         \Illuminate\Translation\Translator::class,
                      //                         \Illuminate\Contracts\Translation\Translator::class,
                      //                     ],
-                                          'log' => [\Illuminate\Log\LogManager::class, \Psr\Log\LoggerInterface::class],
+                     'log' => [\Illuminate\Log\LogManager::class, \Psr\Log\LoggerInterface::class],
                      //                     'mail.manager' => [\Illuminate\Mail\MailManager::class, \Illuminate\Contracts\Mail\Factory::class],
                      //                     'mailer' => [
                      //                         \Illuminate\Mail\Mailer::class,

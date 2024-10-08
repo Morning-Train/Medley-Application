@@ -67,15 +67,28 @@ class MorningMedley
         $index = array_search('artisan', $_SERVER['argv']);
         $argv = array_slice($_SERVER['argv'], $index); // Trim WordPress args
 
-        // Since WordPress treats the --help flag as the help command with no simple way of telling it to do otherwise,
-        // Hotfix for using --help as --doc
-        if (in_array('--doc', $argv)) {
-            foreach ($argv as $index => $value) {
-                if ($value === '--doc') {
-                    $argv[$index] = '--help';
+        // Replace args matching keys with their values
+        // If the value is null then the arg is removed
+        $argMap = [
+            '--path' => null, // --path is only for WordPress and illegal in Artisan
+            '--doc' => '--help', // --doc is an alias for --help, since --help is reserved for WordPress
+        ];
+
+        foreach ($argv as $index => $value) {
+            // Get the arg without value
+            $rawValue = explode("=", $value)[0];
+            if (array_key_exists($rawValue, $argMap)) {
+                if ($argMap[$rawValue] === null) {
+                    // Alias is null, so remove the arg
+                    unset($argv[$index]);
+                } else {
+                    // Replace the arg with its alias
+                    $argv[$index] = str_replace($rawValue, $argMap[$rawValue], $value);
                 }
             }
         }
+
+        $argv = array_filter($argv);
 
         $status = $kernel->handle(
             $input = new Symfony\Component\Console\Input\ArgvInput($argv),

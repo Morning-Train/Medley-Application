@@ -1532,7 +1532,6 @@ class Application extends Container implements ApplicationContract, CachesConfig
                      //                     'hash' => [\Illuminate\Hashing\HashManager::class],
                      //                     'hash.driver' => [\Illuminate\Contracts\Hashing\Hasher::class],
                      'translator' => [
-                         \MorningMedley\Application\Translation\NullTranslator::class,
                          \Illuminate\Contracts\Translation\Translator::class,
                      ],
                      'log' => [\Illuminate\Log\LogManager::class, \Psr\Log\LoggerInterface::class],

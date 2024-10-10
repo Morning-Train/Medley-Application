@@ -27,6 +27,7 @@ use Illuminate\Support\Traits\Macroable;
 use MorningMedley\Application\Providers\CacheTransientStoreServiceProvider;
 use MorningMedley\Application\Providers\UrlGeneratorServiceProvider;
 use MorningMedley\Application\Providers\WpContextServiceProvider;
+use MorningMedley\Application\Translation\NullTranslator;
 use MorningMedley\Application\WpContext\ThemeContext;
 use RuntimeException;
 use Symfony\Component\Console\Input\InputInterface;
@@ -253,6 +254,7 @@ class Application extends Container implements ApplicationContract, CachesConfig
             new Filesystem, $this->basePath(), $this->getCachedPackagesPath()
         ));
 
+        $this->singleton('translator', NullTranslator::class);
         $this->singleton('events', fn(Container $app) => new Dispatcher($app));
         $this->singleton('files', function () {
             return new Filesystem;
@@ -272,7 +274,7 @@ class Application extends Container implements ApplicationContract, CachesConfig
         $this->register(new LogServiceProvider($this));
         $this->register(new CacheTransientStoreServiceProvider($this));
         //        $this->register(new ContextServiceProvider($this));
-//                $this->register(new RoutingServiceProvider($this));
+        //                $this->register(new RoutingServiceProvider($this));
     }
 
     public function createBaseDirectories()
@@ -1529,10 +1531,10 @@ class Application extends Container implements ApplicationContract, CachesConfig
                      //                     'filesystem.cloud' => [\Illuminate\Contracts\Filesystem\Cloud::class],
                      //                     'hash' => [\Illuminate\Hashing\HashManager::class],
                      //                     'hash.driver' => [\Illuminate\Contracts\Hashing\Hasher::class],
-                     //                     'translator' => [
-                     //                         \Illuminate\Translation\Translator::class,
-                     //                         \Illuminate\Contracts\Translation\Translator::class,
-                     //                     ],
+                     'translator' => [
+                         \MorningMedley\Application\Translation\NullTranslator::class,
+                         \Illuminate\Contracts\Translation\Translator::class,
+                     ],
                      'log' => [\Illuminate\Log\LogManager::class, \Psr\Log\LoggerInterface::class],
                      //                     'mail.manager' => [\Illuminate\Mail\MailManager::class, \Illuminate\Contracts\Mail\Factory::class],
                      //                     'mailer' => [
@@ -1638,6 +1640,6 @@ class Application extends Container implements ApplicationContract, CachesConfig
 
     public function setLocale($locale)
     {
-        // TODO: Implement setLocale() method.
+        \switch_to_locale($locale);
     }
 }

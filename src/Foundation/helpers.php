@@ -113,7 +113,7 @@ if (! function_exists('app')) {
      *
      * @param  string|class-string<TClass>|null  $abstract
      * @param  array  $parameters
-     * @return ($abstract is class-string<TClass> ? TClass : ($abstract is null ? \Illuminate\Foundation\Application : mixed))
+     * @return <TClass> ? TClass : ($abstract is null ? \Illuminate\Foundation\Application : mixed))
      */
     function app($abstract = null, array $parameters = [])
     {

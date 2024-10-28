@@ -80,7 +80,7 @@ class CacheTransientStore implements Store
 
     public function forget($key): bool
     {
-        return \delete_transient($key);
+        return \delete_transient($this->prefix . $key);
     }
 
     public function flush(): bool

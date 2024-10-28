@@ -55,4 +55,15 @@ class UrlGenerator implements \Illuminate\Contracts\Routing\UrlGenerator
     {
         // TODO: Implement setRootControllerNamespace() method.
     }
+
+    public function signedRoute($name, $parameters = [], $expiration = null, $absolute = true)
+    {
+        // TODO: Implement signedRoute() method.
+    }
+
+    public function temporarySignedRoute($name, $expiration, $parameters = [], $absolute = true)
+    {
+        // TODO: Implement temporarySignedRoute() method.
+    }
+
 }

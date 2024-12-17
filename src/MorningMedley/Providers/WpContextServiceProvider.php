@@ -2,9 +2,18 @@
 
 namespace MorningMedley\Application\Providers;
 
+use Illuminate\Console\Signals;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Support\DeferrableProvider;
+use Illuminate\Foundation\Console\AboutCommand;
 
+use Illuminate\Foundation\Console\ConfigClearCommand;
+use Illuminate\Foundation\Console\ConfigPublishCommand;
+use Illuminate\Foundation\Console\ConfigShowCommand;
+use Illuminate\Foundation\Console\EnvironmentCommand;
+use Illuminate\Foundation\Console\PackageDiscoverCommand;
 use Illuminate\Support\ServiceProvider;
+use MorningMedley\Application\Console\ConfigCacheCommand;
 use MorningMedley\Application\WpContext\PluginContext;
 use MorningMedley\Application\WpContext\ThemeContext;
 use MorningMedley\Application\WpContext\WpContextContract;
@@ -13,8 +22,11 @@ class WpContextServiceProvider extends ServiceProvider implements DeferrableProv
 {
     public function boot()
     {
-        if (! $this->app->configurationIsCached()) {
-            $this->generateConfig();
+        if (!$this->app->configurationIsCached()) {
+        $this->generateConfig();
+            $this->setWpContext();
+
+            return;
         }
 
         $this->setWpContext();
@@ -23,7 +35,6 @@ class WpContextServiceProvider extends ServiceProvider implements DeferrableProv
     protected function setWpContext()
     {
         $appConfig = $this->app['config']->get('app.wpcontext');
-        $appConfig['url'] = \set_url_scheme($appConfig['url']); // Set protocol
         $configClass = $appConfig['type'] === 'theme' ? ThemeContext::class : PluginContext::class;
         $wpContext = $this->app->makeWith($configClass, $appConfig);
 
@@ -61,7 +72,6 @@ class WpContextServiceProvider extends ServiceProvider implements DeferrableProv
     {
         $styleContents = file_get_contents($stylePath);
         $themeDirName = basename(dirname($stylePath));
-
         $this->app['config']->set('app.wpcontext.name', $this->extractParamValue($styleContents, 'Theme Name'));
         $this->app['config']->set('app.wpcontext.url', \get_theme_root_uri($stylePath) . "/" . $themeDirName . "/");
         $this->app['config']->set('app.wpcontext.description', $this->extractParamValue($styleContents, 'Description'));

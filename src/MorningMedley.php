@@ -69,10 +69,28 @@ class MorningMedley
 
         // Replace args matching keys with their values
         // If the value is null then the arg is removed
+// See: https://make.wordpress.org/cli/handbook/references/config/#global-parameters
         $argMap = [
-            '--path' => null, // --path is only for WordPress and illegal in Artisan
-            '--doc' => '--help', // --doc is an alias for --help, since --help is reserved for WordPress
+            '--path' => null,           // --path is only for WordPress and illegal in Artisan
+            '--ssh' => null,            // Perform operation against a remote server
+            '--http' => null,           // Perform operation against a remote WordPress
+            '--url' => null,            // Pretend request came from given URL - For Multisite installs
+            '--user' => null,           // Set the WordPress user
+            '--skip-plugins' => null,   // Skip loading all or some plugins - MU Plugins are still loaded
+            '--skip-themes' => null,    // Skip loading all or some themes
+            '--skip-packages' => null,  // Skip loading all installed packages
+            '--require' => null,        // Load PHP file before running the command
+            '--exec' => null,           // Execute PHP code before running the command
+            '--context' => null,        // Load WordPress in a given context
+            '--no-color' => null,       // Whether to colorize the output
+            '--color' => null,
+            '--debug' => null,          // Show all PHP errors; add verbosity to WP-CLI
+            '--prompt' => null,         // Prompt the user to enter values for all command arguments, or a subset specified as comma-separated values
+            '--quiet' => null,          // Suppress informational messages
+
+            '--doc' => '--help',        // --doc is an alias for --help, since --help is reserved for WordPress
         ];
+
 
         foreach ($argv as $index => $value) {
             // Get the arg without value

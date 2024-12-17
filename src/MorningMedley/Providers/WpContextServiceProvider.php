@@ -3,8 +3,6 @@
 namespace MorningMedley\Application\Providers;
 
 use Illuminate\Contracts\Support\DeferrableProvider;
-
-use Illuminate\Foundation\Console\ConfigPublishCommand;
 use Illuminate\Support\ServiceProvider;
 use MorningMedley\Application\WpContext\PluginContext;
 use MorningMedley\Application\WpContext\ThemeContext;

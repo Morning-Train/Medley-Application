@@ -33,7 +33,10 @@
         "illuminate/cache": "^11.23",
         "illuminate/http": "^11.23",
         "illuminate/filesystem": "^11.23",
-        "illuminate/log": "^11.23",
-        "vlucas/phpdotenv": "^5.4.1"
+        "vlucas/phpdotenv": "^5.4.1",
+        "symfony/http-foundation": "^6|^7"
+    },
+    "suggest": {
+        "illuminate/log": "Allows configuring logging rules"
     }
 }

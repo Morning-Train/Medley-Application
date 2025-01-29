@@ -32,6 +32,7 @@ use MorningMedley\Application\WpContext\ThemeContext;
 use RuntimeException;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\ConsoleOutput;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -258,6 +259,12 @@ class Application extends Container implements ApplicationContract, CachesConfig
         $this->singleton('events', fn(Container $app) => new Dispatcher($app));
         $this->singleton('files', function () {
             return new Filesystem;
+        });
+        $this->bind('request', function(){
+            $request = Request::createFromGlobals();
+            global $wp_query;
+            $request->query->add($wp_query->query_vars);
+            return $request;
         });
     }
 

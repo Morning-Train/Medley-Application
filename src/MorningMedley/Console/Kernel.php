@@ -97,7 +97,7 @@ class Kernel implements KernelContract
         \MorningMedley\Application\Bootstrap\SetDefaultDebugLogFile::class,
         \Illuminate\Foundation\Bootstrap\LoadEnvironmentVariables::class,
         \MorningMedley\Application\Bootstrap\LoadConfiguration::class,
-        //        \Illuminate\Foundation\Bootstrap\HandleExceptions::class, // Let WordPress handle this
+        \MorningMedley\Application\Bootstrap\HandleExceptions::class,
         \Illuminate\Foundation\Bootstrap\RegisterFacades::class,
         \Illuminate\Foundation\Bootstrap\SetRequestForConsole::class,
         \MorningMedley\Application\Bootstrap\RegisterProviders::class,

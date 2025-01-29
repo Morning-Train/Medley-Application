@@ -205,6 +205,7 @@ class HandleExceptions
      */
     protected function renderForConsole(Throwable $e)
     {
+
         $this->getExceptionHandler()->renderForConsole(new ConsoleOutput, $e);
     }
 

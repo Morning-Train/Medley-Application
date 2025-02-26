@@ -25,6 +25,7 @@ class WpContextServiceProvider extends ServiceProvider implements DeferrableProv
     protected function setWpContext()
     {
         $appConfig = $this->app['config']->get('app.wpcontext');
+        $appConfig['url'] = \content_url($appConfig['relpath']);
         $configClass = $appConfig['type'] === 'theme' ? ThemeContext::class : PluginContext::class;
         $wpContext = $this->app->makeWith($configClass, $appConfig);
 
@@ -63,7 +64,7 @@ class WpContextServiceProvider extends ServiceProvider implements DeferrableProv
         $styleContents = file_get_contents($stylePath);
         $themeDirName = basename(dirname($stylePath));
         $this->app['config']->set('app.wpcontext.name', $this->extractParamValue($styleContents, 'Theme Name'));
-        $this->app['config']->set('app.wpcontext.url', \get_theme_root_uri($stylePath) . "/" . $themeDirName . "/");
+        $this->app['config']->set('app.wpcontext.relpath', str_replace(\content_url(), '', \get_theme_root_uri($stylePath) . "/" . $themeDirName . "/"));
         $this->app['config']->set('app.wpcontext.description', $this->extractParamValue($styleContents, 'Description'));
         $this->app['config']->set('app.wpcontext.version', $this->extractParamValue($styleContents, 'Version'));
         $this->app['config']->set('app.wpcontext.textDomain', $this->extractParamValue($styleContents, 'Text Domain'));
@@ -74,7 +75,7 @@ class WpContextServiceProvider extends ServiceProvider implements DeferrableProv
     {
         $pluginFileContents = file_get_contents($pluginFilePath);
         $this->app['config']->set('app.wpcontext.name', $this->extractParamValue($pluginFileContents, 'Plugin Name'));
-        $this->app['config']->set('app.wpcontext.url', \plugin_dir_url($pluginFilePath));
+        $this->app['config']->set('app.wpcontext.relpath', str_replace(\content_url(), '', \plugin_dir_url($pluginFilePath)));
         $this->app['config']->set('app.wpcontext.description',
             $this->extractParamValue($pluginFileContents, 'Description'));
         $this->app['config']->set('app.wpcontext.version', $this->extractParamValue($pluginFileContents, 'Version'));

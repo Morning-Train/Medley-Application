@@ -1,0 +1,6 @@
+/*
+ Theme Name: {{ name }}
+ Description: {{ description }}
+ Version: 0.0.0
+ Text Domain: {{ domain }}
+ */

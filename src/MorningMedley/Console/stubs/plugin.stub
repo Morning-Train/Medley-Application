@@ -1,0 +1,11 @@
+<?php
+
+/*
+ * Plugin Name: {{ name }}k
+ * Description: {{ description }}
+ * Version: 0.0.0
+ * Text Domain: {{ domain }}
+ */
+
+require __DIR__ . "/vendor/autoload.php";
+new  MorningMedley(__DIR__);

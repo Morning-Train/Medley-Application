@@ -2,18 +2,21 @@
 
 namespace MorningMedley\Application\Providers;
 
-use Illuminate\Cache\Console\CacheTableCommand;
 use Illuminate\Console\Signals;
+use Illuminate\Support\ServiceProvider;
 use Illuminate\Contracts\Support\DeferrableProvider;
-use Illuminate\Foundation\Console\AboutCommand;
 
+use Illuminate\Cache\Console\CacheTableCommand;
+
+use Illuminate\Foundation\Console\AboutCommand;
 use Illuminate\Foundation\Console\ConfigClearCommand;
-use Illuminate\Foundation\Console\ConfigPublishCommand;
 use Illuminate\Foundation\Console\ConfigShowCommand;
 use Illuminate\Foundation\Console\EnvironmentCommand;
 use Illuminate\Foundation\Console\PackageDiscoverCommand;
-use Illuminate\Support\ServiceProvider;
+
 use MorningMedley\Application\Console\ConfigCacheCommand;
+use MorningMedley\Application\Console\OptimizeClearCommand;
+use MorningMedley\Application\Console\OptimizeCommand;
 
 class ArtisanServiceProvider extends ServiceProvider implements DeferrableProvider
 {
@@ -25,7 +28,8 @@ class ArtisanServiceProvider extends ServiceProvider implements DeferrableProvid
         'Environment' => EnvironmentCommand::class,
         'PackageDiscover' => PackageDiscoverCommand::class,
         'CacheTable' => CacheTableCommand::class,
-
+        'Optimize' => OptimizeCommand::class,
+        'OptimizeClear' => OptimizeClearCommand::class,
     ];
 
     protected $devCommands = [

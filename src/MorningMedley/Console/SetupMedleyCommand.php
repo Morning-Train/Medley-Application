@@ -4,6 +4,7 @@ namespace MorningMedley\Application\Console;
 
 use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
+use Illuminate\Support\Str;
 use Symfony\Component\Console\Attribute\AsCommand;
 
 #[AsCommand(name: 'medley:setup')]
@@ -17,6 +18,7 @@ class SetupMedleyCommand extends Command
                             {--domain= : App text domain}
                             {--theme : Skip auto-detection. This is a theme}
                             {--plugin : Skip auto-detection. This is a plugin}
+                            {--auto}
                             {--force}';
 
     /**
@@ -27,8 +29,8 @@ class SetupMedleyCommand extends Command
     protected $files;
 
     protected string $appName;
-    protected string $appDescription;
     protected string $appDomain;
+    protected string $basename;
 
     public function __construct(Filesystem $files)
     {
@@ -39,6 +41,7 @@ class SetupMedleyCommand extends Command
 
     public function handle(): void
     {
+        $this->basename = basename(base_path());
         // Figure out if this is theme or plugin
         $type = $this->getType();
         if ($type === null) {
@@ -87,19 +90,15 @@ class SetupMedleyCommand extends Command
 
     public function loadOptions(): void
     {
+        if ($this->option('auto')) {
+            $this->appName = Str::title($this->basename);
+            $this->appDomain = $this->basename;
+
+            return;
+        }
+
         $this->appName = $this->option('name') ?? $this->ask('What is your app\'s name?');
-        $this->appDescription = $this->option('description') ?? $this->ask('What is your app about?');
         $this->appDomain = $this->option('domain') ?? $this->ask('What is your app\'s text-domain?');
-    }
-
-    public function getDescriptionOption(): string
-    {
-        return $this->option('description') ?? '';
-    }
-
-    public function getDomainOption(): string
-    {
-        return $this->option('domain') ?? 'medley-app';
     }
 
     public function getStubFile(string $stub): string
@@ -146,8 +145,7 @@ class SetupMedleyCommand extends Command
             'style',
             [
                 'name' => $this->appName,
-                'description' => $this->getDescriptionOption(),
-                'domain' => $this->getDomainOption(),
+                'domain' => $this->appDomain,
             ]
         );
 
@@ -180,8 +178,7 @@ class SetupMedleyCommand extends Command
             'plugin',
             [
                 'name' => $this->appName,
-                'description' => $this->getDescriptionOption(),
-                'domain' => $this->getDomainOption(),
+                'domain' => $this->appDomain,
             ]
         );
     }

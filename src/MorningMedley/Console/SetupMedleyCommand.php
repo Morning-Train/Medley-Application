@@ -14,12 +14,11 @@ class SetupMedleyCommand extends Command
 
     protected $signature = 'medley:setup
                             {--name= : App name}
-                            {--description= : App description}
                             {--domain= : App text domain}
                             {--theme : Skip auto-detection. This is a theme}
                             {--plugin : Skip auto-detection. This is a plugin}
-                            {--auto}
-                            {--force}';
+                            {--auto : Auto resolve name and domain by app dir}
+                            {--force : Overwrite existing files if they exist}';
 
     /**
      * The filesystem instance.
@@ -42,6 +41,7 @@ class SetupMedleyCommand extends Command
     public function handle(): void
     {
         $this->basename = basename(base_path());
+
         // Figure out if this is theme or plugin
         $type = $this->getType();
         if ($type === null) {
@@ -50,7 +50,7 @@ class SetupMedleyCommand extends Command
 
         if ($type === 'theme') {
             $this->setupTheme();
-            \WP_CLI::success(\WP_CLI::colorize("%p{$this->appName}%n theme has been setup."));
+            \WP_CLI::success(\WP_CLI::colorize("\n%p{$this->appName}%n theme has been setup. \nRun %ynpm run build%n to prepare assets."));
         }
 
         if ($type === 'plugin') {
@@ -163,11 +163,13 @@ class SetupMedleyCommand extends Command
             'templates/index.html',
             'index-template'
         );
+
+        $this->files->delete(base_path('plugin.php'));
     }
 
     public function setupPlugin(): void
     {
-        if (file_exists(base_path('plugin.css')) && ! $this->option('force')) {
+        if (file_exists(base_path('plugin.php')) && ! $this->option('force')) {
             \WP_CLI::success('Plugin already seems to be setup');
         }
 
@@ -181,5 +183,7 @@ class SetupMedleyCommand extends Command
                 'domain' => $this->appDomain,
             ]
         );
+        
+        $this->files->delete(base_path('functions.php'));
     }
 }

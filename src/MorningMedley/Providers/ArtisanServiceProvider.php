@@ -19,12 +19,10 @@ use Illuminate\Foundation\Console\PackageDiscoverCommand;
 use MorningMedley\Application\Console\ConfigCacheCommand;
 use MorningMedley\Application\Console\OptimizeClearCommand;
 use MorningMedley\Application\Console\OptimizeCommand;
-use MorningMedley\Application\Console\SetupMedleyCommand;
 
 class ArtisanServiceProvider extends ServiceProvider implements DeferrableProvider
 {
     protected $commands = [
-        'SetupMedley' => SetupMedleyCommand::class,
         'About' => AboutCommand::class,
         'CacheClear' => CacheClearCommand::class,
         'CacheTable' => CacheTableCommand::class,

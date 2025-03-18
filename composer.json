@@ -35,5 +35,8 @@
         "illuminate/filesystem": "^11.23",
         "illuminate/log": "^11.23",
         "vlucas/phpdotenv": "^5.4.1"
-    }
+    },
+    "bin": [
+        "bin/medley-setup"
+    ]
 }

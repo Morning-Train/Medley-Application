@@ -92,6 +92,10 @@ class WpContextServiceProvider extends ServiceProvider implements DeferrableProv
             return false;
         }
 
+        if(empty($matches)){
+            return "";
+        }
+
         return trim($matches[0]);
     }
 

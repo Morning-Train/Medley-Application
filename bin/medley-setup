@@ -1,10 +1,10 @@
 #!/usr/bin/env php
 <?php
 
-    use Composer\Console\Input\InputOption;
     use Illuminate\Support\Str;
     use Symfony\Component\Console\Input\ArgvInput;
     use Symfony\Component\Console\Input\InputDefinition;
+    use Symfony\Component\Console\Input\InputOption;
     use Symfony\Component\Console\Output\ConsoleOutput;
 
     class Setup
@@ -212,7 +212,13 @@ EOT;
     }
 
     (static function () {
-        $vendorPath = dirname(__DIR__, 4) . '/vendor/autoload.php';
+        // Locate project autoload
+        for ($i = 4; $i >= 0; $i--) {
+            $vendorPath = dirname(__DIR__, $i) . '/vendor/autoload.php';
+            if (file_exists($vendorPath)) {
+                break;
+            }
+        }
 
         if (!file_exists($vendorPath)) {
             throw new \Exception('Could not autoload dependencies.');
@@ -222,10 +228,8 @@ EOT;
         $autoloadPath = $vendorPath;
         $rootPath = dirname($autoloadPath, 2);
 
-        $arguments = $originalArguments = $_SERVER['argv'];
-
         $input = new ArgvInput(
-            $arguments, new InputDefinition([
+            $_SERVER['argv'], new InputDefinition([
                 new InputOption('theme', null, InputOption::VALUE_NONE),
                 new InputOption('plugin', null, InputOption::VALUE_NONE),
                 new InputOption('force', null, InputOption::VALUE_NONE),

@@ -25,6 +25,7 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Illuminate\Support\Traits\Macroable;
 use MorningMedley\Application\Providers\CacheTransientStoreServiceProvider;
+use MorningMedley\Application\Providers\DebugInformationServiceProvider;
 use MorningMedley\Application\Providers\UrlGeneratorServiceProvider;
 use MorningMedley\Application\Providers\WpContextServiceProvider;
 use MorningMedley\Application\Translation\NullTranslator;
@@ -46,7 +47,7 @@ class Application extends Container implements ApplicationContract, CachesConfig
      *
      * @var string
      */
-    const VERSION = '0.2.12';
+    const VERSION = '0.2.13';
 
     /**
      * The base path for the Laravel installation.
@@ -234,7 +235,7 @@ class Application extends Container implements ApplicationContract, CachesConfig
      */
     public function version()
     {
-        return 'Medley:' . static::VERSION;
+        return 'Medley: ' . static::VERSION;
     }
 
     /**
@@ -268,6 +269,7 @@ class Application extends Container implements ApplicationContract, CachesConfig
      */
     protected function registerBaseServiceProviders()
     {
+        $this->register(new DebugInformationServiceProvider($this));
         $this->register(new WpContextServiceProvider($this));
         $this->register(new UrlGeneratorServiceProvider($this));
         $this->register(new CacheServiceProvider($this));

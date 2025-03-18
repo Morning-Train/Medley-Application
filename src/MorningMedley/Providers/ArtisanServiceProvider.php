@@ -7,6 +7,8 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Contracts\Support\DeferrableProvider;
 
 use Illuminate\Cache\Console\CacheTableCommand;
+use Illuminate\Cache\Console\ClearCommand as CacheClearCommand;
+
 
 use Illuminate\Foundation\Console\AboutCommand;
 use Illuminate\Foundation\Console\ConfigClearCommand;
@@ -22,12 +24,13 @@ class ArtisanServiceProvider extends ServiceProvider implements DeferrableProvid
 {
     protected $commands = [
         'About' => AboutCommand::class,
+        'CacheClear' => CacheClearCommand::class,
+        'CacheTable' => CacheTableCommand::class,
         'ConfigCache' => ConfigCacheCommand::class,
         'ConfigClear' => ConfigClearCommand::class,
         'ConfigShow' => ConfigShowCommand::class,
         'Environment' => EnvironmentCommand::class,
         'PackageDiscover' => PackageDiscoverCommand::class,
-        'CacheTable' => CacheTableCommand::class,
         'Optimize' => OptimizeCommand::class,
         'OptimizeClear' => OptimizeClearCommand::class,
     ];
@@ -94,6 +97,18 @@ class ArtisanServiceProvider extends ServiceProvider implements DeferrableProvid
     {
         $this->app->singleton(CacheTableCommand::class, function ($app) {
             return new CacheTableCommand($app['files']);
+        });
+    }
+
+    /**
+     * Register the command.
+     *
+     * @return void
+     */
+    protected function registerCacheClearCommand()
+    {
+        $this->app->singleton(CacheClearCommand::class, function ($app) {
+            return new CacheClearCommand($app['cache'], $app['files']);
         });
     }
 

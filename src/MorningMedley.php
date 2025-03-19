@@ -1,19 +1,28 @@
 <?php
 
 use Illuminate\Contracts\Debug\ExceptionHandler as ExceptionHandlerContract;
+use Illuminate\Foundation\Configuration\Exceptions;
 
 class MorningMedley
 {
     readonly public \MorningMedley\Application\Application $app;
     protected string $baseDir;
 
+    public static function configure(string $baseDir): static
+    {
+        return new static($baseDir);
+    }
+
     public function __construct(string $baseDir)
     {
-        $this->baseDir = $_ENV['APP_BASE_PATH'] ?? $baseDir;
         $_ENV['APP_ENV'] = \wp_get_environment_type();
 
+        $this->baseDir = $_ENV['APP_BASE_PATH'] ?? $baseDir;
         $this->app = new \MorningMedley\Application\Application($this->baseDir);
+    }
 
+    public function create()
+    {
         if ($this->app->runningInConsole()) {
             $this->bootConsole();
         } else {
@@ -131,5 +140,36 @@ class MorningMedley
         $kernel->terminate($input, $status);
 
         exit($status);
+    }
+
+    /**
+     * Register and configure the application's exception handler.
+     *
+     * @param  callable|null  $using
+     * @return $this
+     */
+    public function withExceptions(?callable $using = null)
+    {
+        $using ??= fn() => true;
+
+        $this->app->afterResolving(
+            \Illuminate\Foundation\Exceptions\Handler::class,
+            fn($handler) => $using(new Exceptions($handler)),
+        );
+
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function withIgnition()
+    {
+        $this->app->afterBootstrapping(
+            \MorningMedley\Application\Bootstrap\RegisterProviders::class,
+            fn() => $this->app->register(new \MorningMedley\Application\Providers\IgnitionServiceProvider($this->app))
+        );
+
+        return $this;
     }
 }

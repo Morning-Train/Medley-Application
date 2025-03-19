@@ -87,7 +87,9 @@
  /** @see https://developer.wordpress.org/plugins/plugin-basics/header-requirements/#header-fields */
 
 require __DIR__ . "/vendor/autoload.php";
-new  MorningMedley(__DIR__);
+MorningMedley::configure(__DIR__)
+    ->withIgnition()
+    ->create();
 
 EOT;
             $this->putFile(
@@ -105,7 +107,9 @@ EOT;
 <?php
 
 require __DIR__ . "/vendor/autoload.php";
-new  MorningMedley(__DIR__);
+MorningMedley::configure(__DIR__)
+    ->withIgnition()
+    ->create();
 
 EOT;
             $this->putFile(

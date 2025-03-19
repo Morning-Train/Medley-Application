@@ -18,6 +18,7 @@ use Illuminate\Foundation\ProviderRepository;
 use Illuminate\Log\Context\ContextServiceProvider;
 use Illuminate\Log\LogServiceProvider;
 use Illuminate\Routing\RoutingServiceProvider;
+use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Env;
@@ -33,7 +34,7 @@ use MorningMedley\Application\WpContext\ThemeContext;
 use RuntimeException;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\ConsoleOutput;
-use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Request as SymfoniRequest;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -262,7 +263,7 @@ class Application extends Container implements ApplicationContract, CachesConfig
             return new Filesystem;
         });
         $this->bind('request', function(){
-            $request = Request::createFromGlobals();
+            $request = Request::capture();
             global $wp_query;
             $request->query->add($wp_query->query_vars);
             return $request;
@@ -1583,6 +1584,8 @@ class Application extends Container implements ApplicationContract, CachesConfig
                      //                         \Illuminate\Contracts\Validation\Factory::class,
                      //                     ],
                      PackageManifest::class => [\Illuminate\Foundation\PackageManifest::class],
+                     \MorningMedley\Application\Http\ResponseFactory::class => [\Illuminate\Contracts\Routing\ResponseFactory::class],
+                    \Illuminate\Log\Context\ContextLogProcessor::class => [\Illuminate\Contracts\Log\ContextLogProcessor::class]
                  ] as $key => $aliases) {
             foreach ($aliases as $alias) {
                 $this->alias($key, $alias);

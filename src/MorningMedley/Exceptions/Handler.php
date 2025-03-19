@@ -2,6 +2,7 @@
 
 namespace MorningMedley\Application\Exceptions;
 
+use Illuminate\Contracts\Support\Responsable;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\MultipleRecordsFoundException;
 use Illuminate\Database\RecordNotFoundException;
@@ -50,9 +51,33 @@ class Handler extends \Illuminate\Foundation\Exceptions\Handler
         }
     }
 
+    /**
+     * Render an exception into an HTTP response.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Throwable  $e
+     * @return \Symfony\Component\HttpFoundation\Response
+     *
+     * @throws \Throwable
+     */
     public function render($request, \Throwable $e)
     {
-        return $this->convertExceptionToResponse($e);
+        $e = $this->mapException($e);
+        if (method_exists($e, 'render') && $response = $e->render($request)) {
+            return $response;
+        }
+
+        if ($e instanceof Responsable) {
+            return $this->finalizeRenderedResponse($request, $e->toResponse($request), $e);
+        }
+
+        $e = $this->prepareException($e);
+
+        if ($response = $this->renderViaCallbacks($request, $e)) {
+            return $this->finalizeRenderedResponse($request, $response, $e);
+        }
+
+        return $this->renderExceptionResponse($request, $e);
     }
 
     /**

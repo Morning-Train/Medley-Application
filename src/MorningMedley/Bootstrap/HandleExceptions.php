@@ -40,7 +40,7 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
      * @param  \Throwable  $e
      * @return void
      */
-    public function hssandleException(Throwable $e)
+    public function handleException(Throwable $e)
     {
         static::$reservedMemory = null;
 
@@ -49,13 +49,8 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
         } catch (\Exception) {
             $exceptionHandlerFailed = true;
         }
+
         if (! config('app.debug')) {
-            try {
-                $this->defaultExceptionHandler(...func_get_args()); // Try to fall back if possible
-            } catch (\Throwable $e) {
-
-            }
-
             return;
         }
 
@@ -70,14 +65,4 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
         }
     }
 
-    /**
-     * Render an exception as an HTTP response and send it.
-     *
-     * @param  \Throwable  $e
-     * @return void
-     */
-    protected function renderHttpResponse(Throwable $e)
-    {
-        $this->getExceptionHandler()->render(null, $e)->send();
-    }
 }

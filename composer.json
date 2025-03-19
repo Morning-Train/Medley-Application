@@ -38,5 +38,8 @@
     },
     "suggest": {
         "illuminate/log": "Allows configuring logging rules"
-    }
+    },
+    "bin": [
+        "bin/medley-setup"
+    ]
 }

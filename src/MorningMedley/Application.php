@@ -13,6 +13,7 @@ use Illuminate\Events\EventServiceProvider;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Foundation\AliasLoader;
 use Illuminate\Foundation\Bootstrap\LoadEnvironmentVariables;
+use Illuminate\Foundation\EnvironmentDetector;
 use Illuminate\Foundation\Events\LocaleUpdated;
 use Illuminate\Foundation\ProviderRepository;
 use Illuminate\Log\Context\ContextServiceProvider;
@@ -762,11 +763,16 @@ class Application extends Container implements ApplicationContract, CachesConfig
     /**
      * Detect the application's current environment.
      *
+     * @param  \Closure  $callback
      * @return string
      */
-    public function detectEnvironment(): string
+    public function detectEnvironment(Closure $callback)
     {
-        return $this['env'] = $_ENV['APP_ENV'];
+        $args = $this->runningInConsole() && isset($_SERVER['argv'])
+            ? $_SERVER['argv']
+            : null;
+
+        return $this['env'] = (new EnvironmentDetector)->detect($callback, $args);
     }
 
     /**

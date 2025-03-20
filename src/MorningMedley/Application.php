@@ -27,6 +27,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Traits\Macroable;
 use MorningMedley\Application\Providers\CacheTransientStoreServiceProvider;
 use MorningMedley\Application\Providers\DebugInformationServiceProvider;
+use MorningMedley\Application\Providers\IgnitionServiceProvider;
 use MorningMedley\Application\Providers\UrlGeneratorServiceProvider;
 use MorningMedley\Application\Providers\WpContextServiceProvider;
 use MorningMedley\Application\Translation\NullTranslator;
@@ -45,7 +46,7 @@ class Application extends Container implements ApplicationContract, CachesConfig
     use Macroable;
 
     /**
-     * The Laravel framework version.
+     * The Medley framework version.
      *
      * @var string
      */
@@ -231,13 +232,23 @@ class Application extends Container implements ApplicationContract, CachesConfig
     }
 
     /**
-     * Get the version number of the application.
+     * Get the version number of the laravel application.
      *
      * @return string
      */
     public function version()
     {
-        return 'Medley: ' . static::VERSION;
+        return config('laravelversion','12.0.0');
+    }
+
+    /**
+     * Get the version number of the medley application.
+     *
+     * @return string
+     */
+    public function medleyVersion()
+    {
+        return static::VERSION;
     }
 
     /**

@@ -96,6 +96,7 @@ class Kernel implements KernelContract
     protected $bootstrappers = [
         \Illuminate\Foundation\Bootstrap\LoadEnvironmentVariables::class,
         \MorningMedley\Application\Bootstrap\LoadConfiguration::class,
+        \MorningMedley\Application\Bootstrap\SetLaravelVersion::class,
         \MorningMedley\Application\Bootstrap\HandleExceptions::class,
         \Illuminate\Foundation\Bootstrap\RegisterFacades::class,
         \Illuminate\Foundation\Bootstrap\SetRequestForConsole::class,

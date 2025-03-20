@@ -21,13 +21,15 @@ class MorningMedley
         $this->app = new \MorningMedley\Application\Application($this->baseDir);
     }
 
-    public function create()
+    public function create(): static
     {
         if ($this->app->runningInConsole()) {
             $this->bootConsole();
         } else {
             $this->bootHttp();
         }
+
+        return $this;
     }
 
     protected function bootHttp()
@@ -155,19 +157,6 @@ class MorningMedley
         $this->app->afterResolving(
             \Illuminate\Foundation\Exceptions\Handler::class,
             fn($handler) => $using(new Exceptions($handler)),
-        );
-
-        return $this;
-    }
-
-    /**
-     * @return $this
-     */
-    public function withIgnition()
-    {
-        $this->app->afterBootstrapping(
-            \MorningMedley\Application\Bootstrap\RegisterProviders::class,
-            fn() => $this->app->register(new \MorningMedley\Application\Providers\IgnitionServiceProvider($this->app))
         );
 
         return $this;

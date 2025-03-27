@@ -41,7 +41,7 @@ class Kernel implements KernelContract
     public function __construct(Application $app)
     {
         $this->app = $app;
-        $this->request =  \Illuminate\Http\Request::capture();
+        $this->request =  $this->app->make('request');
     }
 
     /**

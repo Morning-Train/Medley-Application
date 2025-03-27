@@ -94,10 +94,10 @@ class Kernel implements KernelContract
      * @var string[]
      */
     protected $bootstrappers = [
-        \MorningMedley\Application\Bootstrap\SetDefaultDebugLogFile::class,
         \Illuminate\Foundation\Bootstrap\LoadEnvironmentVariables::class,
         \MorningMedley\Application\Bootstrap\LoadConfiguration::class,
-        //        \Illuminate\Foundation\Bootstrap\HandleExceptions::class, // Let WordPress handle this
+        \MorningMedley\Application\Bootstrap\SetLaravelVersion::class,
+        \MorningMedley\Application\Bootstrap\HandleExceptions::class,
         \Illuminate\Foundation\Bootstrap\RegisterFacades::class,
         \Illuminate\Foundation\Bootstrap\SetRequestForConsole::class,
         \MorningMedley\Application\Bootstrap\RegisterProviders::class,

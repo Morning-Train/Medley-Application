@@ -13,11 +13,13 @@ use Illuminate\Events\EventServiceProvider;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Foundation\AliasLoader;
 use Illuminate\Foundation\Bootstrap\LoadEnvironmentVariables;
+use Illuminate\Foundation\EnvironmentDetector;
 use Illuminate\Foundation\Events\LocaleUpdated;
 use Illuminate\Foundation\ProviderRepository;
 use Illuminate\Log\Context\ContextServiceProvider;
 use Illuminate\Log\LogServiceProvider;
 use Illuminate\Routing\RoutingServiceProvider;
+use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Env;
@@ -26,6 +28,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Traits\Macroable;
 use MorningMedley\Application\Providers\CacheTransientStoreServiceProvider;
 use MorningMedley\Application\Providers\DebugInformationServiceProvider;
+use MorningMedley\Application\Providers\IgnitionServiceProvider;
 use MorningMedley\Application\Providers\UrlGeneratorServiceProvider;
 use MorningMedley\Application\Providers\WpContextServiceProvider;
 use MorningMedley\Application\Translation\NullTranslator;
@@ -33,6 +36,7 @@ use MorningMedley\Application\WpContext\ThemeContext;
 use RuntimeException;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\ConsoleOutput;
+use Symfony\Component\HttpFoundation\Request as SymfoniRequest;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -43,7 +47,7 @@ class Application extends Container implements ApplicationContract, CachesConfig
     use Macroable;
 
     /**
-     * The Laravel framework version.
+     * The Medley framework version.
      *
      * @var string
      */
@@ -229,13 +233,23 @@ class Application extends Container implements ApplicationContract, CachesConfig
     }
 
     /**
-     * Get the version number of the application.
+     * Get the version number of the laravel application.
      *
      * @return string
      */
     public function version()
     {
-        return 'Medley: ' . static::VERSION;
+        return config('laravelversion','12.0.0');
+    }
+
+    /**
+     * Get the version number of the medley application.
+     *
+     * @return string
+     */
+    public function medleyVersion()
+    {
+        return static::VERSION;
     }
 
     /**
@@ -259,6 +273,12 @@ class Application extends Container implements ApplicationContract, CachesConfig
         $this->singleton('events', fn(Container $app) => new Dispatcher($app));
         $this->singleton('files', function () {
             return new Filesystem;
+        });
+        $this->bind('request', function(){
+            $request = Request::capture();
+            global $wp_query;
+            $request->query->add($wp_query->query_vars);
+            return $request;
         });
     }
 
@@ -743,11 +763,16 @@ class Application extends Container implements ApplicationContract, CachesConfig
     /**
      * Detect the application's current environment.
      *
+     * @param  \Closure  $callback
      * @return string
      */
-    public function detectEnvironment(): string
+    public function detectEnvironment(Closure $callback)
     {
-        return $this['env'] = $_ENV['APP_ENV'];
+        $args = $this->runningInConsole() && isset($_SERVER['argv'])
+            ? $_SERVER['argv']
+            : null;
+
+        return $this['env'] = (new EnvironmentDetector)->detect($callback, $args);
     }
 
     /**
@@ -1576,6 +1601,8 @@ class Application extends Container implements ApplicationContract, CachesConfig
                      //                         \Illuminate\Contracts\Validation\Factory::class,
                      //                     ],
                      PackageManifest::class => [\Illuminate\Foundation\PackageManifest::class],
+                     \MorningMedley\Application\Http\ResponseFactory::class => [\Illuminate\Contracts\Routing\ResponseFactory::class],
+                    \Illuminate\Log\Context\ContextLogProcessor::class => [\Illuminate\Contracts\Log\ContextLogProcessor::class]
                  ] as $key => $aliases) {
             foreach ($aliases as $alias) {
                 $this->alias($key, $alias);

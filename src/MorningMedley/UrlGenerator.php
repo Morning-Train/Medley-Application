@@ -66,4 +66,8 @@ class UrlGenerator implements \Illuminate\Contracts\Routing\UrlGenerator
         // TODO: Implement temporarySignedRoute() method.
     }
 
+    public function query($path, $query = [], $extra = [], $secure = null)
+    {
+        // TODO: Implement query() method.
+    }
 }

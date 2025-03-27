@@ -36,7 +36,6 @@ class AliasLoader
      * Create a new AliasLoader instance.
      *
      * @param  array  $aliases
-     * @return void
      */
     private function __construct($aliases)
     {
@@ -51,7 +50,6 @@ class AliasLoader
      */
     public static function getInstance(array $aliases = [])
     {
-
         if (is_null(static::$instance)) {
             return static::$instance = new static($aliases);
         }
@@ -165,7 +163,7 @@ class AliasLoader
      */
     protected function prependToLoaderStack()
     {
-        spl_autoload_register([$this, 'load'], true, true);
+        spl_autoload_register($this->load(...), true, true);
     }
 
     /**

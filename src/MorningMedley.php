@@ -1,24 +1,35 @@
 <?php
 
 use Illuminate\Contracts\Debug\ExceptionHandler as ExceptionHandlerContract;
+use Illuminate\Foundation\Configuration\Exceptions;
 
 class MorningMedley
 {
     readonly public \MorningMedley\Application\Application $app;
     protected string $baseDir;
 
+    public static function configure(string $baseDir): static
+    {
+        return new static($baseDir);
+    }
+
     public function __construct(string $baseDir)
     {
-        $this->baseDir = $_ENV['APP_BASE_PATH'] ?? $baseDir;
         $_ENV['APP_ENV'] = \wp_get_environment_type();
 
+        $this->baseDir = $_ENV['APP_BASE_PATH'] ?? $baseDir;
         $this->app = new \MorningMedley\Application\Application($this->baseDir);
+    }
 
+    public function create(): static
+    {
         if ($this->app->runningInConsole()) {
             $this->bootConsole();
         } else {
             $this->bootHttp();
         }
+
+        return $this;
     }
 
     protected function bootHttp()
@@ -27,9 +38,9 @@ class MorningMedley
             Illuminate\Contracts\Http\Kernel::class,
             \MorningMedley\Application\Http\Kernel::class);
 
-        $this->app->bind(
+        $this->app->singleton(
             ExceptionHandlerContract::class,
-            \MorningMedley\Application\Http\ExceptionHandler::class);
+            \MorningMedley\Application\Exceptions\Handler::class);
 
         $this->app->make(Illuminate\Contracts\Http\Kernel::class)
             ->bootstrap();
@@ -44,7 +55,7 @@ class MorningMedley
 
         $this->app->bind(
             ExceptionHandlerContract::class,
-            \MorningMedley\Application\Console\ExceptionHandler::class);
+            \MorningMedley\Application\Exceptions\Handler::class);
 
         $this->app->bind(
             'composer',
@@ -69,28 +80,43 @@ class MorningMedley
 
         // Replace args matching keys with their values
         // If the value is null then the arg is removed
-// See: https://make.wordpress.org/cli/handbook/references/config/#global-parameters
+        // See: https://make.wordpress.org/cli/handbook/references/config/#global-parameters
         $argMap = [
-            '--path' => null,           // --path is only for WordPress and illegal in Artisan
-            '--ssh' => null,            // Perform operation against a remote server
-            '--http' => null,           // Perform operation against a remote WordPress
-            '--url' => null,            // Pretend request came from given URL - For Multisite installs
-            '--user' => null,           // Set the WordPress user
-            '--skip-plugins' => null,   // Skip loading all or some plugins - MU Plugins are still loaded
-            '--skip-themes' => null,    // Skip loading all or some themes
-            '--skip-packages' => null,  // Skip loading all installed packages
-            '--require' => null,        // Load PHP file before running the command
-            '--exec' => null,           // Execute PHP code before running the command
-            '--context' => null,        // Load WordPress in a given context
-            '--no-color' => null,       // Whether to colorize the output
+            '--path' => null,
+            // --path is only for WordPress and illegal in Artisan
+            '--ssh' => null,
+            // Perform operation against a remote server
+            '--http' => null,
+            // Perform operation against a remote WordPress
+            '--url' => null,
+            // Pretend request came from given URL - For Multisite installs
+            '--user' => null,
+            // Set the WordPress user
+            '--skip-plugins' => null,
+            // Skip loading all or some plugins - MU Plugins are still loaded
+            '--skip-themes' => null,
+            // Skip loading all or some themes
+            '--skip-packages' => null,
+            // Skip loading all installed packages
+            '--require' => null,
+            // Load PHP file before running the command
+            '--exec' => null,
+            // Execute PHP code before running the command
+            '--context' => null,
+            // Load WordPress in a given context
+            '--no-color' => null,
+            // Whether to colorize the output
             '--color' => null,
-            '--debug' => null,          // Show all PHP errors; add verbosity to WP-CLI
-            '--prompt' => null,         // Prompt the user to enter values for all command arguments, or a subset specified as comma-separated values
-            '--quiet' => null,          // Suppress informational messages
+            '--debug' => null,
+            // Show all PHP errors; add verbosity to WP-CLI
+            '--prompt' => null,
+            // Prompt the user to enter values for all command arguments, or a subset specified as comma-separated values
+            '--quiet' => null,
+            // Suppress informational messages
 
-            '--doc' => '--help',        // --doc is an alias for --help, since --help is reserved for WordPress
+            '--doc' => '--help',
+            // --doc is an alias for --help, since --help is reserved for WordPress
         ];
-
 
         foreach ($argv as $index => $value) {
             // Get the arg without value
@@ -116,5 +142,23 @@ class MorningMedley
         $kernel->terminate($input, $status);
 
         exit($status);
+    }
+
+    /**
+     * Register and configure the application's exception handler.
+     *
+     * @param  callable|null  $using
+     * @return $this
+     */
+    public function withExceptions(?callable $using = null)
+    {
+        $using ??= fn() => true;
+
+        $this->app->afterResolving(
+            \Illuminate\Foundation\Exceptions\Handler::class,
+            fn($handler) => $using(new Exceptions($handler)),
+        );
+
+        return $this;
     }
 }

@@ -21,14 +21,16 @@ class Kernel implements KernelContract
      * @var string[]
      */
     protected $bootstrappers = [
-        \MorningMedley\Application\Bootstrap\SetDefaultDebugLogFile::class,
         \Illuminate\Foundation\Bootstrap\LoadEnvironmentVariables::class,
         \MorningMedley\Application\Bootstrap\LoadConfiguration::class,
-//        \Illuminate\Foundation\Bootstrap\HandleExceptions::class, // Let WordPress handle these
+        \MorningMedley\Application\Bootstrap\SetLaravelVersion::class,
+        \MorningMedley\Application\Bootstrap\HandleExceptions::class,
         \Illuminate\Foundation\Bootstrap\RegisterFacades::class,
         \MorningMedley\Application\Bootstrap\RegisterProviders::class,
         \Illuminate\Foundation\Bootstrap\BootProviders::class,
     ];
+
+    private \Illuminate\Http\Request $request;
 
     /**
      * Create a new HTTP kernel instance.
@@ -39,6 +41,7 @@ class Kernel implements KernelContract
     public function __construct(Application $app)
     {
         $this->app = $app;
+        $this->request =  $this->app->make('request');
     }
 
     /**

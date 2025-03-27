@@ -20,12 +20,12 @@ class ConfigCacheCommand extends \Illuminate\Foundation\Console\ConfigCacheComma
     protected function getFreshConfiguration()
     {
         $basePath = $this->laravel->basePath();
-        $medley = new \MorningMedley($basePath);
+        $medley = \MorningMedley::configure($basePath)->create();
         $app = $medley->app;
 
         $app->useStoragePath($this->laravel->storagePath());
 
-        $app->make(ConsoleKernelContract::class)->bootstrap();
+        $app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
         return $app['config']->all();
     }

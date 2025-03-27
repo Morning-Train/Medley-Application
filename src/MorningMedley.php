@@ -27,7 +27,7 @@ class MorningMedley
             Illuminate\Contracts\Http\Kernel::class,
             \MorningMedley\Application\Http\Kernel::class);
 
-        $this->app->bind(
+        $this->app->singleton(
             ExceptionHandlerContract::class,
             \MorningMedley\Application\Http\ExceptionHandler::class);
 

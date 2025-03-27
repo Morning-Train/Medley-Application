@@ -19,7 +19,6 @@ use Throwable;
 
 class Handler extends \Illuminate\Foundation\Exceptions\Handler
 {
-
     /**
      * A list of the internal exception types that should not be reported.
      *

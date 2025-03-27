@@ -41,7 +41,7 @@ class LoadConfiguration
         // Finally, we will set the application's environment based on the configuration
         // values that were loaded. We will pass a callback which will be used to get
         // the environment in a web context where an "--env" switch is not present.
-        $app->detectEnvironment();
+        $app->detectEnvironment(fn () => $config->get('app.env', 'production'));
 
         date_default_timezone_set($config->get('app.timezone', 'UTC'));
 
@@ -93,7 +93,7 @@ class LoadConfiguration
      */
     protected function loadConfigurationFile(RepositoryContract $repository, $name, $path, array $base)
     {
-        $config = require $path;
+        $config = (fn () => require $path)();
 
         if (isset($base[$name])) {
             $config = array_merge($base[$name], $config);

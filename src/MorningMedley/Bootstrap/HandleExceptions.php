@@ -17,6 +17,10 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
      */
     public function bootstrap(Application $app)
     {
+        if (! $app['config']->get('app.handle_exceptions', true)) {
+            return;
+        }
+
         static::$reservedMemory = str_repeat('x', 32768);
 
         static::$app = $app;

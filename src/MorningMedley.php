@@ -64,7 +64,7 @@ class MorningMedley
         $this->app->register(
             \MorningMedley\Application\Providers\ArtisanServiceProvider::class);
 
-        // Kernel is bootstrapped in its handle() method
+        $this->app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
         \WP_CLI::add_command('artisan', [$this, 'artisan']);
     }
 

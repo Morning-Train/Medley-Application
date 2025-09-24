@@ -1,81 +1,98 @@
 #!/usr/bin/env php
 <?php
 
-    use Illuminate\Support\Str;
-    use Symfony\Component\Console\Input\ArgvInput;
-    use Symfony\Component\Console\Input\InputDefinition;
-    use Symfony\Component\Console\Input\InputOption;
-    use Symfony\Component\Console\Output\ConsoleOutput;
+use Illuminate\Support\Str;
+use Symfony\Component\Console\Input\ArgvInput;
+use Symfony\Component\Console\Input\InputDefinition;
+use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\ConsoleOutput;
 
-    class Setup
+class Setup
+{
+    public function __construct(
+        private string $rootPath,
+        private string $name,
+        private string $domain,
+        private string $type,
+        private ConsoleOutput $output
+    ) {
+    }
+
+    public function isSetup(): bool
     {
-        public function __construct(
-            private string $rootPath,
-            private string $name,
-            private string $domain,
-            private string $type,
-            private ConsoleOutput $output
-        ) {
+        if ($this->type === 'theme') {
+            return file_exists($this->rootPath . "/style.css");
+        } else {
+            return file_exists($this->rootPath . "/plugin.php");
         }
+    }
 
-        public function isSetup(): bool
-        {
-            if ($this->type === 'theme') {
-                return file_exists($this->rootPath . "/style.css");
-            } else {
-                return file_exists($this->rootPath . "/plugin.php");
-            }
+    public function setup()
+    {
+        if ($this->type === 'theme') {
+            $this->setupTheme();
+        } else {
+            $this->setupPlugin();
         }
+    }
 
-        public function setup()
-        {
-            if ($this->type === 'theme') {
-                $this->setupTheme();
-            } else {
-                $this->setupPlugin();
-            }
-        }
+    protected function setupTheme()
+    {
+        $this->output->writeln("<info>Setting up theme: {$this->name}</info>");
 
-        protected function setupTheme()
-        {
-            $this->output->writeln("<info>Setting up theme: {$this->name}</info>");
+        $this->putAppPhp();
+        $this->putFunctionsPhp();
+        $this->putStyleCss();
+        $this->putTemplatesIndexHtml();
+        $this->putThemeJson();
 
-            $this->putFunctionsPhp();
-            $this->putStyleCss();
-            $this->putTemplatesIndexHtml();
-            $this->putThemeJson();
+        $this->output->writeln("<info>Theme set up successfully.</info>");
+    }
 
-            $this->output->writeln("<info>Theme set up successfully.</info>");
-        }
+    protected function setupPlugin()
+    {
+        $this->output->writeln("<info>Setting up plugin: {$this->name}</info>");
 
-        protected function setupPlugin()
-        {
-            $this->output->writeln("<info>Setting up plugin: {$this->name}</info>");
+        $this->putAppPhp();
+        $this->putPluginPhp();
 
-            $this->putPluginPhp();
+        $this->output->writeln("<info>Plugin set up successfully.</info>");
+    }
 
-            $this->output->writeln("<info>Plugin set up successfully.</info>");
-        }
+    protected function replaceVariables(string $string, array $variables): string
+    {
+        return str_replace(
+            array_map(fn($key) => "{{ $key }}", array_keys($variables)),
+            array_values($variables),
+            $string
+        );
+    }
 
-        protected function replaceVariables(string $string, array $variables): string
-        {
-            return str_replace(
-                array_map(fn($key) => "{{ $key }}", array_keys($variables)),
-                array_values($variables),
-                $string
-            );
-        }
+    protected function putFile(string $file, string $content)
+    {
+        $this->output->writeln("<info>Added file: {$file}</info>");
+        file_put_contents($this->rootPath . "/" . $file, $content);
+    }
 
-        protected function putFile(string $file, string $content)
-        {
-            $this->output->writeln("<info>Added file: {$file}</info>");
-            file_put_contents($this->rootPath . "/" . $file, $content);
-        }
+    protected function putAppPhp()
+    {
+        $appPhpContent = <<<EOT
+<?php
+
+return MorningMedley::configure(dirname(__FILE__, 2))
+    ->create();
+
+EOT;
+        $this->putFile(
+            'bootstrap/app.php',
+            $appPhpContent
+        );
+    }
 
 
-        protected function putPluginPhp()
-        {
-            $pluginPhpContent = <<<EOT
+    protected function putPluginPhp()
+    {
+        $pluginPhpContent = <<<EOT
 <?php
 
 /*
@@ -87,38 +104,37 @@
  /** @see https://developer.wordpress.org/plugins/plugin-basics/header-requirements/#header-fields */
 
 require __DIR__ . "/vendor/autoload.php";
-MorningMedley::configure(__DIR__)
-    ->create();
+require __DIR__ . "/bootstrap/app.php";
 
 EOT;
-            $this->putFile(
-                'plugin.php',
-                $this->replaceVariables($pluginPhpContent, [
-                    'name' => $this->name,
-                    'domain' => $this->domain,
-                ])
-            );
-        }
+        $this->putFile(
+            'plugin.php',
+            $this->replaceVariables($pluginPhpContent, [
+                'name' => $this->name,
+                'domain' => $this->domain,
+            ])
+        );
+    }
 
-        protected function putFunctionsPhp()
-        {
-            $content = <<<EOT
+    protected function putFunctionsPhp()
+    {
+        $content = <<<EOT
 <?php
 
 require __DIR__ . "/vendor/autoload.php";
-MorningMedley::configure(__DIR__)
-    ->create();
+require __DIR__ . "/bootstrap/app.php";
+
 
 EOT;
-            $this->putFile(
-                'functions.php',
-                $content,
-            );
-        }
+        $this->putFile(
+            'functions.php',
+            $content,
+        );
+    }
 
-        protected function putStyleCss()
-        {
-            $content = <<<EOT
+    protected function putStyleCss()
+    {
+        $content = <<<EOT
 /*
  Theme Name: {{ name }}
  Version: 0.0.0
@@ -128,34 +144,34 @@ EOT;
 /* https://developer.wordpress.org/themes/basics/main-stylesheet-style-css/#basic-structure */
 
 EOT;
-            $this->putFile(
-                'style.css',
-                $this->replaceVariables($content, [
-                    'name' => $this->name,
-                    'domain' => $this->domain,
-                ])
-            );
+        $this->putFile(
+            'style.css',
+            $this->replaceVariables($content, [
+                'name' => $this->name,
+                'domain' => $this->domain,
+            ])
+        );
+    }
+
+    protected function putTemplatesIndexHtml()
+    {
+        if (!is_dir($this->rootPath . "/templates")) {
+            mkdir($this->rootPath . "/templates");
         }
 
-        protected function putTemplatesIndexHtml()
-        {
-            if (!is_dir($this->rootPath . "/templates")) {
-                mkdir($this->rootPath . "/templates");
-            }
-
-            $content = <<<EOT
+        $content = <<<EOT
 <!-- wp:post-content /-->
 EOT;
-            $this->putFile(
-                'templates/index.html',
-                $content
-            );
-        }
+        $this->putFile(
+            'templates/index.html',
+            $content
+        );
+    }
 
-        protected function putThemeJson()
-        {
-            $schema = '$schema';
-            $content = <<<EOT
+    protected function putThemeJson()
+    {
+        $schema = '$schema';
+        $content = <<<EOT
 {
     "$schema": "https://schemas.wp.org/trunk/theme.json",
     "version": 3,
@@ -205,69 +221,69 @@ EOT;
 }
 
 EOT;
-            $this->putFile(
-                'theme.json',
-                $content
-            );
-        }
-
+        $this->putFile(
+            'theme.json',
+            $content
+        );
     }
 
-    (static function () {
-        // Locate project autoload
-        for ($i = 4; $i >= 0; $i--) {
-            $vendorPath = dirname(__DIR__, $i) . '/vendor/autoload.php';
-            if (file_exists($vendorPath)) {
-                break;
-            }
+}
+
+(static function () {
+    // Locate project autoload
+    for ($i = 4; $i >= 0; $i--) {
+        $vendorPath = dirname(__DIR__, $i) . '/vendor/autoload.php';
+        if (file_exists($vendorPath)) {
+            break;
         }
+    }
 
-        if (!file_exists($vendorPath)) {
-            throw new \Exception('Could not autoload dependencies.');
-        }
+    if (!file_exists($vendorPath)) {
+        throw new \Exception('Could not autoload dependencies.');
+    }
 
-        include_once $vendorPath;
-        $autoloadPath = $vendorPath;
-        $rootPath = dirname($autoloadPath, 2);
+    include_once $vendorPath;
+    $autoloadPath = $vendorPath;
+    $rootPath = dirname($autoloadPath, 2);
 
-        $input = new ArgvInput(
-            $_SERVER['argv'], new InputDefinition([
-                new InputOption('theme', null, InputOption::VALUE_NONE),
-                new InputOption('plugin', null, InputOption::VALUE_NONE),
-                new InputOption('force', null, InputOption::VALUE_NONE),
-                new InputOption('name', 'n', InputOption::VALUE_OPTIONAL, '', Str::title(basename($rootPath))),
-                new InputOption('domain', 'd', InputOption::VALUE_OPTIONAL, '', basename($rootPath)),
-            ])
-        );
-        $output = new ConsoleOutput(ConsoleOutput::VERBOSITY_NORMAL, true);
+    $input = new ArgvInput(
+        $_SERVER['argv'], new InputDefinition([
+            new InputOption('theme', null, InputOption::VALUE_NONE),
+            new InputOption('plugin', null, InputOption::VALUE_NONE),
+            new InputOption('force', null, InputOption::VALUE_NONE),
+            new InputOption('name', 'n', InputOption::VALUE_OPTIONAL, '', Str::title(basename($rootPath))),
+            new InputOption('domain', 'd', InputOption::VALUE_OPTIONAL, '', basename($rootPath)),
+        ])
+    );
+    $output = new ConsoleOutput(ConsoleOutput::VERBOSITY_NORMAL, true);
 
-        // Resolve type
-        $type = null;
-        if ($input->getOption('theme')) {
-            $type = 'theme';
-        }
-        if ($input->getOption('plugin')) {
-            $type = 'plugin';
-        }
-        if ($type === null) {
-            // Auto-resolve type
-            $type = basename(dirname($rootPath)) === 'themes' ? 'theme' : 'plugin';
-        }
+    // Resolve type
+    $type = null;
+    if ($input->getOption('theme')) {
+        $type = 'theme';
+    }
+    if ($input->getOption('plugin')) {
+        $type = 'plugin';
+    }
+    if ($type === null) {
+        // Auto-resolve type
+        $type = basename(dirname($rootPath)) === 'themes' ? 'theme' : 'plugin';
+    }
 
-        $setup = new Setup(
-            $rootPath,
-            $input->getOption('name'),
-            $input->getOption('domain'),
-            $type,
-            $output
-        );
+    $setup = new Setup(
+        $rootPath,
+        $input->getOption('name'),
+        $input->getOption('domain'),
+        $type,
+        $output
+    );
 
-        if ($setup->isSetup() && !$input->getOption('force')) {
-            $output->writeln("<info>Already setup. Use --force if you wish to overwrite.</info>");
-            exit;
-        }
+    if ($setup->isSetup() && !$input->getOption('force')) {
+        $output->writeln("<info>Already setup. Use --force if you wish to overwrite.</info>");
+        exit;
+    }
 
-        $setup->setup();
+    $setup->setup();
 
-        exit();
-    })();
+    exit();
+})();

@@ -179,7 +179,6 @@ class HandleExceptions
     public function handleException(Throwable $e)
     {
         static::$reservedMemory = null;
-
         try {
             $this->getExceptionHandler()->report($e);
         } catch (Exception) {

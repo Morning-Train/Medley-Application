@@ -33,7 +33,6 @@ class Handler extends \Illuminate\Foundation\Exceptions\Handler
         RecordsNotFoundException::class,
         RequestExceptionInterface::class,
         TokenMismatchException::class,
-        ValidationException::class,
     ];
 
     /**

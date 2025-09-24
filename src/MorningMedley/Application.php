@@ -12,6 +12,7 @@ use Illuminate\Log\LogServiceProvider;
 use Illuminate\Support\Env;
 use MorningMedley\Application\Providers\CacheTransientStoreServiceProvider;
 use MorningMedley\Application\Providers\DebugInformationServiceProvider;
+use MorningMedley\Application\Providers\IgnitionServiceProvider;
 use MorningMedley\Application\Translation\NullTranslator;
 use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
@@ -106,6 +107,9 @@ class Application extends \Illuminate\Foundation\Application
         $this->register(new \Illuminate\Filesystem\FilesystemServiceProvider($this));
         $this->register(new CacheServiceProvider($this));
         $this->register(new CacheTransientStoreServiceProvider($this));
+
+        // Delay this slightly
+        $this->booted(fn() => $this->register(new IgnitionServiceProvider($this)));
 
         // ContextServiceProvider & RoutingServiceProvider have been removed since Queue and Routing are separate packages
     }

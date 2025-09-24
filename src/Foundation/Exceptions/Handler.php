@@ -805,6 +805,7 @@ class Handler implements ExceptionHandlerContract
      */
     protected function prepareResponse($request, Throwable $e)
     {
+
         if (! $this->isHttpException($e) && config('app.debug')) {
             return $this->toIlluminateResponse($this->convertExceptionToResponse($e), $e)->prepare($request);
         }
@@ -812,7 +813,6 @@ class Handler implements ExceptionHandlerContract
         if (! $this->isHttpException($e)) {
             $e = new HttpException(500, $e->getMessage(), $e);
         }
-
         return $this->toIlluminateResponse(
             $this->renderHttpException($e), $e
         )->prepare($request);

@@ -2,20 +2,16 @@
 
 namespace MorningMedley\Application\Configuration;
 
-use Illuminate\Contracts\Console\Kernel as ConsoleKernel;
-use Illuminate\Contracts\Http\Kernel as HttpKernel;
+use Illuminate\Contracts\Console\Kernel as ConsoleKernelContract;
+use Illuminate\Contracts\Http\Kernel as HttpKernelContract;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Bootstrap\RegisterProviders;
 use Illuminate\Foundation\Configuration\Exceptions;
-use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as AppEventServiceProvider;
-use Illuminate\Foundation\Support\Providers\RouteServiceProvider as AppRouteServiceProvider;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Broadcast;
-use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\View;
-use MorningMedley\Application\Exceptions\Handler;
+
+use Symfony\Component\Console\Input\ArgvInput;
+use Symfony\Component\Console\Output\ConsoleOutput;
 
 class ApplicationBuilder
 {
@@ -29,15 +25,16 @@ class ApplicationBuilder
     public function __construct(protected Application $app)
     {
     }
+
     public function withKernels()
     {
         $this->app->singleton(
-            Illuminate\Contracts\Http\Kernel::class,
+            HttpKernelContract::class,
             \MorningMedley\Application\Http\Kernel::class
         );
 
         $this->app->singleton(
-            Illuminate\Contracts\Console\Kernel::class,
+            ConsoleKernelContract::class,
             \MorningMedley\Application\Console\Kernel::class
         );
 
@@ -62,7 +59,6 @@ class ApplicationBuilder
 
         return $this;
     }
-
 
     /**
      * Register the core event service provider for the application.
@@ -103,9 +99,9 @@ class ApplicationBuilder
             $commands = [$this->app->path('Console/Commands')];
         }
 
-        $this->app->afterResolving(ConsoleKernel::class, function ($kernel) use ($commands) {
-            [$commands, $paths] = (new Collection($commands))->partition(fn ($command) => class_exists($command));
-            [$routes, $paths] = $paths->partition(fn ($path) => is_file($path));
+        $this->app->afterResolving(ConsoleKernelContract::class, function ($kernel) use ($commands) {
+            [$commands, $paths] = (new Collection($commands))->partition(fn($command) => class_exists($command));
+            [$routes, $paths] = $paths->partition(fn($path) => is_file($path));
 
             $this->app->booted(static function () use ($kernel, $commands, $paths, $routes) {
                 $kernel->addCommands($commands->all());
@@ -139,7 +135,6 @@ class ApplicationBuilder
 
         return $this;
     }
-
 
     /**
      * Register an array of container bindings to be bound when the application is booting.
@@ -247,7 +242,7 @@ class ApplicationBuilder
     protected function bootHttp()
     {
 
-        $this->app->make(Illuminate\Contracts\Http\Kernel::class)
+        $this->app->make(HttpKernelContract::class)
             ->bootstrap();
 
     }
@@ -261,7 +256,7 @@ class ApplicationBuilder
         $this->app->register(
             \MorningMedley\Application\Providers\ArtisanServiceProvider::class);
 
-        $this->app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+        $this->app->make(ConsoleKernelContract::class)->bootstrap();
         \WP_CLI::add_command('artisan', [$this, 'artisan']);
     }
 
@@ -269,7 +264,7 @@ class ApplicationBuilder
     {
         define('LARAVEL_START', microtime(true));
 
-        $kernel = $this->app->make(Illuminate\Contracts\Console\Kernel::class);
+        $kernel = $this->app->make(ConsoleKernelContract::class);
 
         // Find the index of "artisan" and remove anything preceding it, such as "wp"
         $index = array_search('artisan', $_SERVER['argv']);
@@ -332,54 +327,12 @@ class ApplicationBuilder
         $argv = array_filter($argv);
 
         $status = $kernel->handle(
-            $input = new Symfony\Component\Console\Input\ArgvInput($argv),
-            new Symfony\Component\Console\Output\ConsoleOutput
+            $input = new ArgvInput($argv),
+            new ConsoleOutput
         );
 
         $kernel->terminate($input, $status);
 
         exit($status);
-    }
-
-    /**
-     * Medley does not support broadcasting at this moment
-     */
-    public function withBroadcasting(string $channels, array $attributes = [])
-    {
-        // Do nothing
-
-        return $this;
-    }
-
-    /**
-     * Medley does not support withRouting
-     * Please manage all routing withing /routes/*.php
-     *
-     */
-    public function withRouting(
-        ?\Closure $using = null,
-        array|string|null $web = null,
-        array|string|null $api = null,
-        ?string $commands = null,
-        ?string $channels = null,
-        ?string $pages = null,
-        ?string $health = null,
-        string $apiPrefix = 'api',
-        ?callable $then = null
-    ) {
-        // Do nothing
-        return $this;
-    }
-
-    /**
-     * Medley does not support application level middleware
-     *
-     * @param  callable|null  $callback
-     * @return $this
-     */
-    public function withMiddleware(?callable $callback = null)
-    {
-        // Do nothing
-        return $this;
     }
 }

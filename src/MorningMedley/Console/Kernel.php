@@ -98,6 +98,7 @@ class Kernel implements KernelContract
         \MorningMedley\Application\Bootstrap\LoadConfiguration::class,
         \MorningMedley\Application\Bootstrap\SetLaravelVersion::class,
         \MorningMedley\Application\Bootstrap\HandleExceptions::class,
+        \MorningMedley\Application\Bootstrap\SetWpContext::class,
         \Illuminate\Foundation\Bootstrap\RegisterFacades::class,
         \Illuminate\Foundation\Bootstrap\SetRequestForConsole::class,
         \MorningMedley\Application\Bootstrap\RegisterProviders::class,

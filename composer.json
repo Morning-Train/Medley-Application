@@ -22,6 +22,7 @@
             "src/MorningMedley.php"
         ],
         "files": [
+            "src/MorningMedley/helpers.php",
             "src/Foundation/helpers.php"
         ]
     },

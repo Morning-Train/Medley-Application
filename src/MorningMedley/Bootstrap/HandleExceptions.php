@@ -83,7 +83,7 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
         if (error_reporting() & $level && config('app.debug')) {
             throw new ErrorException($message, 0, $level, $file, $line);
         }
-        
+
         // We still want to report!
         try {
             $logger = static::$app->make(LogManager::class);
@@ -100,8 +100,6 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
         }
 
         if (static::$app->runningInConsole()) {
-            $this->renderForConsole($e);
-
             if ($exceptionHandlerFailed ?? false) {
                 exit(1);
             }

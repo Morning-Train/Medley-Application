@@ -2,8 +2,14 @@
 
 namespace MorningMedley\Application\Http;
 
+use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Http\Kernel as KernelContract;
+use Illuminate\Foundation\Http\Events\RequestHandled;
+use Illuminate\Routing\Pipeline;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Facade;
+use Throwable;
 
 class Kernel implements KernelContract
 {
@@ -15,6 +21,15 @@ class Kernel implements KernelContract
      */
     protected $app;
 
+    protected $middleware = [];
+
+    /**
+     * When the kernel starting handling the current request.
+     *
+     * @var \Illuminate\Support\Carbon|null
+     */
+    protected $requestStartedAt;
+
     /**
      * The bootstrap classes for the application.
      *
@@ -25,6 +40,7 @@ class Kernel implements KernelContract
         \MorningMedley\Application\Bootstrap\LoadConfiguration::class,
         \MorningMedley\Application\Bootstrap\SetLaravelVersion::class,
         \MorningMedley\Application\Bootstrap\HandleExceptions::class,
+        \MorningMedley\Application\Bootstrap\SetWpContext::class,
         \Illuminate\Foundation\Bootstrap\RegisterFacades::class,
         \MorningMedley\Application\Bootstrap\RegisterProviders::class,
         \Illuminate\Foundation\Bootstrap\BootProviders::class,
@@ -41,7 +57,7 @@ class Kernel implements KernelContract
     public function __construct(Application $app)
     {
         $this->app = $app;
-        $this->request =  $this->app->make('request');
+        $this->request = $this->app->make('request');
     }
 
     /**
@@ -52,7 +68,55 @@ class Kernel implements KernelContract
      */
     public function handle($request)
     {
+        $this->requestStartedAt = Carbon::now();
 
+        try {
+            $request->enableHttpMethodParameterOverride();
+
+            $response = $this->sendRequestThroughRouter($request);
+        } catch (\Throwable $e) {
+            $this->reportException($e);
+
+            $response = $this->renderException($request, $e);
+        }
+
+        /*$this->app['events']->dispatch(
+            new RequestHandled($request, $response)
+        );*/
+
+        return $response;
+    }
+
+    /**
+     * Send the given request through the middleware / router.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    protected function sendRequestThroughRouter($request)
+    {
+        $this->app->instance('request', $request);
+
+        Facade::clearResolvedInstance('request');
+
+        return (new Pipeline($this->app))
+            ->send($request)
+            ->through($this->app->shouldSkipMiddleware() ? [] : $this->middleware)
+            ->then($this->dispatchToRouter());
+    }
+
+    /**
+     * Get the route dispatcher callback.
+     *
+     * @return \Closure
+     */
+    protected function dispatchToRouter()
+    {
+        return function ($request) {
+            $this->app->instance('request', $request);
+
+            return $this->app->make('router')->dispatch($request);
+        };
     }
 
     /**
@@ -87,6 +151,29 @@ class Kernel implements KernelContract
     protected function bootstrappers()
     {
         return $this->bootstrappers;
+    }
+
+    /**
+     * Report the exception to the exception handler.
+     *
+     * @param  \Throwable  $e
+     * @return void
+     */
+    protected function reportException(\Throwable $e)
+    {
+        $this->app[ExceptionHandler::class]->report($e);
+    }
+
+    /**
+     * Render the exception to a response.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Throwable  $e
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    protected function renderException($request, Throwable $e)
+    {
+        return $this->app[ExceptionHandler::class]->render($request, $e);
     }
 
     /**

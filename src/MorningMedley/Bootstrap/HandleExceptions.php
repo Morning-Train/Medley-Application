@@ -2,7 +2,10 @@
 
 namespace MorningMedley\Application\Bootstrap;
 
+use ErrorException;
+use Exception;
 use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Log\LogManager;
 use Throwable;
 
 class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
@@ -17,62 +20,89 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
      */
     public function bootstrap(Application $app)
     {
+        // Allow bypass
         if (! $app['config']->get('app.handle_exceptions', true)) {
             return;
         }
 
-        static::$reservedMemory = str_repeat('x', 32768);
-
-        static::$app = $app;
-
-        error_reporting(-1);
-
-        set_error_handler($this->forwardsTo('handleError'));
-
-        set_exception_handler($this->forwardsTo('handleException'));
-
-        register_shutdown_function($this->forwardsTo('handleShutdown'));
-
+        // For easy ray
         if ($app['config']->get('app.send_exceptions_to_ray', false) && function_exists('ray')) {
             $app->make(\Illuminate\Contracts\Debug\ExceptionHandler::class)->reportable(function (\Throwable $e) {
                 ray()->exception($e);
             });
         }
+
+        parent::bootstrap($app);
     }
 
     /**
-     * Handle an uncaught exception from the application.
+     * Report PHP deprecations, or convert PHP errors to ErrorException instances.
      *
-     * Note: Most exceptions can be handled via the try / catch block in
-     * the HTTP and Console kernels. But, fatal error exceptions must
-     * be handled differently since they are not normal exceptions.
-     *
-     * @param  \Throwable  $e
+     * @param  int  $level
+     * @param  string  $message
+     * @param  string  $file
+     * @param  int  $line
      * @return void
+     *
+     * @throws \ErrorException
      */
-    public function handleException(Throwable $e)
+    public function handleError($level, $message, $file = '', $line = 0)
     {
-        static::$reservedMemory = null;
-
-        try {
-            $this->getExceptionHandler()->report($e);
-        } catch (\Exception) {
-            $exceptionHandlerFailed = true;
-        }
-
-        if (! config('app.debug')) {
-            return;
-        }
-
-        if (static::$app->runningInConsole()) {
-            $this->renderForConsole($e);
-
-            if ($exceptionHandlerFailed ?? false) {
-                exit(1);
-            }
-        } else {
-            $this->renderHttpResponse($e);
+        if ($this->isDeprecation($level)) {
+            $this->handleDeprecationError($message, $file, $line, $level);
+        } elseif ($this->isWarning($level)) {
+            $this->handleWarningError($message, $file, $line, $level);
+        } elseif (error_reporting() & $level) {
+            throw new ErrorException($message, 0, $level, $file, $line);
         }
     }
 
+    /**
+     * Determine if the error level is a warning.
+     *
+     * @param  int  $level
+     * @return bool
+     */
+    protected function isWarning($level)
+    {
+        return in_array($level, [E_WARNING, E_USER_WARNING]);
+    }
+
+    /**
+     * Reports a deprecation to the "deprecations" logger.
+     *
+     * @param  string  $message
+     * @param  string  $file
+     * @param  int  $line
+     * @param  int  $level
+     * @return void
+     */
+    public function handleWarningError($message, $file, $line, $level = E_DEPRECATED)
+    {
+        // If debug then throw
+        if (error_reporting() & $level && config('app.debug')) {
+            throw new ErrorException($message, 0, $level, $file, $line);
+        }
+
+        // We still want to report!
+        try {
+            $logger = static::$app->make(LogManager::class);
+        } catch (Exception) {
+            return;
+        }
+
+        static::$reservedMemory = null;
+        $e = new ErrorException($message, 0, $level, $file, $line);
+        try {
+            $this->getExceptionHandler()->report($e);
+        } catch (Exception) {
+            $exceptionHandlerFailed = true;
+        }
+
+        if (static::$app->runningInConsole()) {
+            if ($exceptionHandlerFailed ?? false) {
+                exit(1);
+            }
+        }
+    }
 }

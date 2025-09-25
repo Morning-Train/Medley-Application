@@ -33,7 +33,6 @@ class Handler extends \Illuminate\Foundation\Exceptions\Handler
         RecordsNotFoundException::class,
         RequestExceptionInterface::class,
         TokenMismatchException::class,
-        ValidationException::class,
     ];
 
     /**
@@ -79,30 +78,5 @@ class Handler extends \Illuminate\Foundation\Exceptions\Handler
         }
 
         return $this->renderExceptionResponse($request, $e);
-    }
-
-    /**
-     * Render an exception to the console.
-     *
-     * @param  \Symfony\Component\Console\Output\OutputInterface  $output
-     * @param  \Throwable  $e
-     * @return void
-     *
-     * @internal This method is not meant to be used or overwritten outside the framework.
-     */
-    public function renderForConsole($output, Throwable $e)
-    {
-        if ($e instanceof CommandNotFoundException) {
-            $message = Str::of($e->getMessage())->explode('.')->first();
-
-            if (! empty($alternatives = $e->getAlternatives())) {
-                $message .= '. Did you mean one of these?';
-                \WP_CLI::error_multi_line([$message, ...$alternatives]);
-            } else {
-                \WP_CLI::error($message);
-            }
-        } else {
-            \WP_CLI::error($e->getMessage());
-        }
     }
 }

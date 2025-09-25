@@ -22,25 +22,24 @@
             "src/MorningMedley.php"
         ],
         "files": [
+            "src/MorningMedley/helpers.php",
             "src/Foundation/helpers.php"
         ]
     },
     "require": {
         "php": "^8.2",
-        "illuminate/container": "^12.3.0",
-        "illuminate/support": "^12.3.0",
+        "illuminate/container": "^12.31.0",
+        "illuminate/support": "^12.31.0",
         "illuminate/config": "^12.3.0",
-        "illuminate/cache": "^12.3.0",
-        "illuminate/http": "^12.3.0",
-        "illuminate/filesystem": "^12.3.0",
-        "illuminate/log": "^12.3.0",
-        "illuminate/console": "^12.3.0",
+        "illuminate/cache": "^12.31.0",
+        "illuminate/http": "^12.31.0",
+        "illuminate/filesystem": "^12.31.0",
+        "illuminate/log": "^12.31.0",
+        "illuminate/console": "^12.31.0",
         "vlucas/phpdotenv": "^5.6.1",
         "symfony/http-foundation": "^6|^7",
-        "symfony/finder": "^6|^7"
-    },
-    "suggest": {
-        "spatie/laravel-ignition": "A beautiful and customizable error page for PHP applications."
+        "symfony/finder": "^6|^7",
+        "spatie/laravel-ignition": "^2.9.1"
     },
     "bin": [
         "bin/medley-setup"

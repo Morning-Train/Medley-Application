@@ -94,7 +94,7 @@ class RouteListCommand extends Command
         if (! $this->output->isVeryVerbose()) {
             $this->router->flushMiddlewareGroups();
         }
-ray($this->router);
+
         if (! $this->router->getRoutes()->count()) {
             return $this->components->error("Your application doesn't have any routes.");
         }
@@ -225,7 +225,7 @@ ray($this->router);
             $path = (new ReflectionFunction($route->action['uses']))
                 ->getFileName();
         } elseif (is_string($route->action['uses']) &&
-            str_contains($route->action['uses'], 'SerializableClosure')) {
+                  str_contains($route->action['uses'], 'SerializableClosure')) {
             return false;
         } elseif (is_string($route->action['uses'])) {
             if ($this->isFrameworkController($route)) {

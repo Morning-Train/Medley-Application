@@ -10,6 +10,7 @@ use Illuminate\Foundation\Events\LocaleUpdated;
 use Illuminate\Http\Client\Request;
 use Illuminate\Log\LogServiceProvider;
 use Illuminate\Support\Env;
+use Illuminate\Support\ServiceProvider;
 use MorningMedley\Application\Providers\CacheTransientStoreServiceProvider;
 use MorningMedley\Application\Providers\DebugInformationServiceProvider;
 use MorningMedley\Application\Providers\IgnitionServiceProvider;
@@ -173,6 +174,15 @@ class Application extends \Illuminate\Foundation\Application
     public function hasDebugModeEnabled()
     {
         return (bool) $this['config']->get('app.debug') ?? (defined('WP_DEBUG') && WP_DEBUG == true);
+    }
+
+    protected function bootProvider(ServiceProvider $provider)
+    {
+        parent::bootProvider($provider);
+
+        if (method_exists($provider, 'hookClass')) {
+            $this->call([$provider, 'hookClass']);
+        }
     }
 
     public function handle(

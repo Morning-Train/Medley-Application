@@ -21,12 +21,12 @@ class SetWpContext
 
         $wpContext = $this->setWpContext();
 
-        if (! $this->app->make(\Illuminate\Contracts\Config\Repository::class)->has('app.asset_url')) {
-            $this->app->make(\Illuminate\Contracts\Config\Repository::class)->set(
-                'app.asset_url',
-                trailingslashit($wpContext->url()) . "public"
-            );
-        }
+        // Config:cache may have stored the wrong protocol.
+        // Here we set the correct protocol/url scheme to avoid mixed-content blocking of assets
+        $this->app->make(\Illuminate\Contracts\Config\Repository::class)->set(
+            'app.asset_url',
+            trailingslashit(\set_url_scheme($wpContext->url())) . "public"
+        );
     }
 
     protected function setWpContext()
@@ -47,7 +47,6 @@ class SetWpContext
     protected function generateConfig()
     {
         if (file_exists($this->app->basePath('style.css'))) {
-            $stylePath = $this->app->basePath('style.css');
             $styleContents = file_get_contents($this->app->basePath('style.css'));
             if (str_contains($styleContents, 'Theme Name:')) {
                 // This is a theme

@@ -3,7 +3,8 @@
 if (! function_exists('register_script')) {
     function register_script(string $handle, string $file, $args = [])
     {
-        $assetFile = substr(base_path("public/" . $file), -3) . '.asset.php';
+        $assetFile = base_path("public/" . substr($file, 0, strlen($file) - 3)) . '.asset.php';
+
         if (file_exists($assetFile)) {
             $details = require $assetFile;
             $version = $details['version'];

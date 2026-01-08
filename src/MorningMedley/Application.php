@@ -28,6 +28,13 @@ class Application extends \Illuminate\Foundation\Application
     const VERSION = '0.4.0';
 
     /**
+     * The current locale initializes as WordPress \get_locale()
+     *
+     * @var string
+     */
+    protected string $locale = '';
+
+    /**
      * Begin configuring a new Laravel application instance.
      *
      * @param  string|null  $basePath
@@ -237,17 +244,17 @@ class Application extends \Illuminate\Foundation\Application
      */
     public function getLocale()
     {
-        return \get_locale();
+        $this->locale = \get_locale();
+
+        return $this->locale;
     }
 
     public function setLocale($locale)
     {
-        throw new \Exception("Managing locale is not part of Medley at this point");
-    }
+        parent::setLocale($locale);
 
-    public function setFallbackLocale($fallbackLocale)
-    {
-        throw new \Exception("Managing locale is not part of Medley at this point");
+        $this->locale = $locale;
+        \add_filter('locale', fn() => $this->locale, 20);
     }
 
     /**

@@ -25,7 +25,7 @@ class Application extends \Illuminate\Foundation\Application
      *
      * @var string
      */
-    const VERSION = '0.4.0';
+    const VERSION = 'v0.4.5';
 
     /**
      * The current locale initializes as WordPress \get_locale()

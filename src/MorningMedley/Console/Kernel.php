@@ -5,7 +5,7 @@ namespace MorningMedley\Application\Console;
 use Carbon\CarbonInterval;
 use Closure;
 use DateTimeInterface;
-use \Illuminate\Console\Application as Artisan;
+use MorningMedley\Application\Artisan;
 use Illuminate\Console\Command;
 use Illuminate\Console\Events\CommandFinished;
 use Illuminate\Console\Events\CommandStarting;
@@ -66,5 +66,26 @@ class Kernel extends \Illuminate\Foundation\Console\Kernel
         $this->app->booted(function () {
             $this->rerouteSymfonyCommandEvents();
         });
+    }
+
+    /**
+     * Get the Artisan application instance.
+     *
+     * @return \Illuminate\Console\Application
+     */
+    protected function getArtisan()
+    {
+        if (is_null($this->artisan)) {
+            $this->artisan = (new Artisan($this->app, $this->events, $this->app->version()))
+                ->resolveCommands($this->commands)
+                ->setContainerCommandLoader();
+
+            if ($this->symfonyDispatcher instanceof EventDispatcher) {
+                $this->artisan->setDispatcher($this->symfonyDispatcher);
+                $this->artisan->setSignalsToDispatchEvent();
+            }
+        }
+
+        return $this->artisan;
     }
 }

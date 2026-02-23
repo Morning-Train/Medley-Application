@@ -14,7 +14,13 @@ if (! function_exists('register_script')) {
             $dependencies = [];
         }
 
-        \wp_enqueue_script(
+        // Allow adding additional dependencies that are not part of the asset file.
+        if (isset($args['dependencies'])) {
+            $dependencies = [...$dependencies, ...$args['dependencies']];
+            unset($args['dependencies']);
+        }
+
+        \wp_register_script(
             $handle,
             asset($file),
             $dependencies,

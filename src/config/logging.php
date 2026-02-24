@@ -43,7 +43,7 @@ return [
     |
     | Available Drivers: "single", "daily", "slack", "syslog",
     |                    "errorlog", "monolog",
-    |                    "custom", "stack"
+    |                    "custom", "stack", "bugsnag"
     |
     */
 
@@ -62,6 +62,7 @@ return [
             'level' => env('LOG_LEVEL', 'debug'),
         ],
 
+        // Requires package "bugsnag/bugsnag-laravel"
         'bugsnag' => [
             'driver' => 'bugsnag',
         ],

@@ -9,6 +9,7 @@ use Illuminate\Filesystem\Filesystem;
 use Illuminate\Foundation\Events\LocaleUpdated;
 use Illuminate\Http\Client\Request;
 use Illuminate\Log\LogServiceProvider;
+use Illuminate\Session\SessionServiceProvider;
 use Illuminate\Support\Env;
 use Illuminate\Support\ServiceProvider;
 use MorningMedley\Application\Providers\CacheTransientStoreServiceProvider;
@@ -115,6 +116,7 @@ class Application extends \Illuminate\Foundation\Application
         $this->register(new \Illuminate\Filesystem\FilesystemServiceProvider($this));
         $this->register(new CacheServiceProvider($this));
         $this->register(new CacheTransientStoreServiceProvider($this));
+        $this->register(new SessionServiceProvider($this));
 
         // Delay this slightly
         $this->booted(fn() => $this->register(new IgnitionServiceProvider($this)));
@@ -342,11 +344,11 @@ class Application extends \Illuminate\Foundation\Application
                      //                         \Illuminate\Contracts\Routing\Registrar::class,
                      //                         \Illuminate\Contracts\Routing\BindingRegistrar::class,
                      //                     ],
-                     //                     'session' => [\Illuminate\Session\SessionManager::class],
-                     //                     'session.store' => [
-                     //                         \Illuminate\Session\Store::class,
-                     //                         \Illuminate\Contracts\Session\Session::class,
-                     //                     ],
+                     'session' => [\Illuminate\Session\SessionManager::class],
+                     'session.store' => [
+                         \Illuminate\Session\Store::class,
+                         \Illuminate\Contracts\Session\Session::class,
+                     ],
                      'url' => [
                          \Illuminate\Contracts\Routing\UrlGenerator::class,
                      ],

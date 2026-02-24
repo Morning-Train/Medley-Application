@@ -80,9 +80,9 @@ class Kernel implements KernelContract
             $response = $this->renderException($request, $e);
         }
 
-        /*$this->app['events']->dispatch(
+        $this->app['events']->dispatch(
             new RequestHandled($request, $response)
-        );*/
+        );
 
         return $response;
     }

@@ -58,7 +58,7 @@ return [
             'driver' => 'single',
             'path' => is_string(defined('WP_DEBUG_LOG'))
                 ? ABSPATH . WP_DEBUG_LOG
-                : ABSPATH . "wp-content/debug-" . substr(md5(env('APP_NAME', 'medley-app')), 0, 12) . ".log",
+                : ABSPATH . "wp-content/debug-" . substr(md5(env('APP_NAME', 'laravel')), 0, 12) . ".log",
             'level' => env('LOG_LEVEL', 'debug'),
         ],
 

@@ -1,6 +1,7 @@
 {
     "name": "morningmedley/application",
     "description": "An Illuminate IoC Container for Morningmedley.",
+    "homepage": "https://morningmedley.dev/",
     "keywords": [
         "morningmedley",
         "wordpress",

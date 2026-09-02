@@ -3,12 +3,14 @@
 namespace MorningMedley\Application\Exceptions;
 
 use Illuminate\Contracts\Container\Container;
+use Illuminate\Contracts\Foundation\ExceptionRenderer;
 use Illuminate\Contracts\Support\Responsable;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\MultipleRecordsFoundException;
 use Illuminate\Database\RecordNotFoundException;
 use Illuminate\Database\RecordsNotFoundException;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Http\Response;
 use Illuminate\Session\TokenMismatchException;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -51,6 +53,15 @@ class Handler extends \Illuminate\Foundation\Exceptions\Handler
         }
     }
 
+    public function report(\Throwable $e): void
+    {
+        if (! config('app.debug')) {
+            return; // logging disabled
+        }
+
+        parent::report($e);
+    }
+
     /**
      * Render an exception into an HTTP response.
      *
@@ -77,6 +88,15 @@ class Handler extends \Illuminate\Foundation\Exceptions\Handler
             return $this->finalizeRenderedResponse($request, $response, $e);
         }
 
-        return $this->renderExceptionResponse($request, $e);
+        if (config('app.show_ignition') && app()->has(ExceptionRenderer::class)) {
+            return new Response(
+                app(ExceptionRenderer::class)->render($e),
+                $this->isHttpException($e) ? $e->getStatusCode() : 500,
+                $this->isHttpException($e) ? $e->getHeaders() : [],
+            );
+        }
+
+        // Never render a Laravel/Symfony error page — hand off to WordPress.
+        throw $e;
     }
 }

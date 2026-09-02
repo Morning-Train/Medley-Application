@@ -21,7 +21,7 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
     public function bootstrap(Application $app)
     {
         // Allow bypass
-        if (! $app['config']->get('app.handle_exceptions', true)) {
+        if (! $app['config']->get('app.debug') && ! $app['config']->get('app.show_ignition')) {
             return;
         }
 

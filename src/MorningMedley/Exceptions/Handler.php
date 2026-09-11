@@ -96,6 +96,10 @@ class Handler extends \Illuminate\Foundation\Exceptions\Handler
             );
         }
 
+        if ($this->isHttpException($e)) {
+            return $this->renderHttpException($e);
+        }
+
         // Never render a Laravel/Symfony error page — hand off to WordPress.
         throw $e;
     }

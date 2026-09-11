@@ -66,7 +66,7 @@ return [
         // Fallback logger (used when the configured stack can't be built).
         // Point it at the same file so nothing ends up in storage/logs/debug.log.
         'emergency' => [
-            'path' => $debugLogPath,
+            'path' => ABSPATH . $debugLogPath,
         ],
     ],
 

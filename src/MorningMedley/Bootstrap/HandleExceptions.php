@@ -52,6 +52,8 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
             $this->handleDeprecationError($message, $file, $line, $level);
         } elseif ($this->isWarning($level)) {
             $this->handleWarningError($message, $file, $line, $level);
+        } elseif ($this->isNotice($level)) {
+            $this->handleNoticeError($message, $file, $line, $level);
         } elseif (error_reporting() & $level) {
             throw new ErrorException($message, 0, $level, $file, $line);
         }
@@ -69,7 +71,18 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
     }
 
     /**
-     * Reports a deprecation to the "deprecations" logger.
+     * Determine if the error level is a notice.
+     *
+     * @param  int  $level
+     * @return bool
+     */
+    protected function isNotice($level)
+    {
+        return in_array($level, [E_NOTICE, E_USER_NOTICE]);
+    }
+
+    /**
+     * Throw warnings in debug mode, otherwise report them.
      *
      * @param  string  $message
      * @param  string  $file
@@ -79,22 +92,28 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
      */
     public function handleWarningError($message, $file, $line, $level = E_DEPRECATED)
     {
-        // If debug then throw
-        if (error_reporting() & $level && config('app.debug')) {
+        // Respect @-suppression and error_reporting settings
+        if (! (error_reporting() & $level)) {
+            return;
+        }
+
+        if (config('app.debug')) {
             throw new ErrorException($message, 0, $level, $file, $line);
         }
 
-        // We still want to report!
+        // We still want to report, but bail out if logging is unavailable,
+        // otherwise a failing report would exit(1) a console command.
         try {
-            $logger = static::$app->make(LogManager::class);
+            static::$app->make(LogManager::class);
         } catch (Exception) {
             return;
         }
 
         static::$reservedMemory = null;
-        $e = new ErrorException($message, 0, $level, $file, $line);
+
         try {
-            $this->getExceptionHandler()->report($e);
+            $this->getExceptionHandler()
+                ->report(new ErrorException($message, 0, $level, $file, $line));
         } catch (Exception) {
             $exceptionHandlerFailed = true;
         }
@@ -103,6 +122,31 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
             if ($exceptionHandlerFailed ?? false) {
                 exit(1);
             }
+        }
+    }
+
+    /**
+     * Report a notice without throwing.
+     *
+     * @param  string  $message
+     * @param  string  $file
+     * @param  int  $line
+     * @param  int  $level
+     * @return void
+     */
+    public function handleNoticeError($message, $file, $line, $level = E_NOTICE)
+    {
+        // Respect @-suppression and error_reporting settings
+        if (! (error_reporting() & $level)) {
+            return;
+        }
+
+        static::$reservedMemory = null;
+
+        try {
+            $this->getExceptionHandler()
+                ->report(new ErrorException($message, 0, $level, $file, $line));
+        } catch (Exception) {
         }
     }
 }

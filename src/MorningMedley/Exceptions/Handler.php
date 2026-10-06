@@ -14,6 +14,7 @@ use Illuminate\Http\Response;
 use Illuminate\Session\TokenMismatchException;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Psr\Log\LogLevel;
 use Symfony\Component\Console\Exception\CommandNotFoundException;
 use Symfony\Component\HttpFoundation\Exception\RequestExceptionInterface;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -35,6 +36,25 @@ class Handler extends \Illuminate\Foundation\Exceptions\Handler
         RecordsNotFoundException::class,
         RequestExceptionInterface::class,
         TokenMismatchException::class,
+    ];
+
+    protected $severity = [
+        E_ERROR => LogLevel::ERROR,
+        E_CORE_ERROR => LogLevel::ERROR,
+        E_COMPILE_ERROR => LogLevel::ERROR,
+        E_USER_ERROR => LogLevel::ERROR,
+        E_RECOVERABLE_ERROR => LogLevel::ERROR,
+
+        E_WARNING => LogLevel::WARNING,
+        E_CORE_WARNING => LogLevel::WARNING,
+        E_COMPILE_WARNING => LogLevel::WARNING,
+        E_USER_WARNING => LogLevel::WARNING,
+
+        E_NOTICE => LogLevel::NOTICE,
+        E_USER_NOTICE => LogLevel::NOTICE,
+
+        E_DEPRECATED => LogLevel::NOTICE,
+        E_USER_DEPRECATED => LogLevel::NOTICE,
     ];
 
     /**
@@ -102,5 +122,20 @@ class Handler extends \Illuminate\Foundation\Exceptions\Handler
 
         // Never render a Laravel/Symfony error page — hand off to WordPress.
         throw $e;
+    }
+
+    /**
+     * Map the exception to a log level.
+     *
+     * @param  \Throwable  $e
+     * @return \Psr\Log\LogLevel::*
+     */
+    protected function mapLogLevel(Throwable $e)
+    {
+        if ($e instanceof \ErrorException) {
+            return $this->severity[$e->getSeverity()] ?? LogLevel::ERROR;
+        }
+
+        return parent::mapLogLevel($e);
     }
 }

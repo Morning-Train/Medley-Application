@@ -49,7 +49,10 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
     public function handleError($level, $message, $file = '', $line = 0)
     {
         if ($this->isDeprecation($level)) {
-            $this->handleDeprecationError($message, $file, $line, $level);
+            // Respect @-suppression and error_reporting settings
+            if (error_reporting() & $level) {
+                $this->handleDeprecationError($message, $file, $line, $level);
+            }
         } elseif ($this->isWarning($level)) {
             $this->handleWarningError($message, $file, $line, $level);
         } elseif ($this->isNotice($level)) {

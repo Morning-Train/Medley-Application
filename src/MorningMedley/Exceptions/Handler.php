@@ -3,15 +3,18 @@
 namespace MorningMedley\Application\Exceptions;
 
 use Illuminate\Contracts\Container\Container;
+use Illuminate\Contracts\Foundation\ExceptionRenderer;
 use Illuminate\Contracts\Support\Responsable;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\MultipleRecordsFoundException;
 use Illuminate\Database\RecordNotFoundException;
 use Illuminate\Database\RecordsNotFoundException;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Http\Response;
 use Illuminate\Session\TokenMismatchException;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Psr\Log\LogLevel;
 use Symfony\Component\Console\Exception\CommandNotFoundException;
 use Symfony\Component\HttpFoundation\Exception\RequestExceptionInterface;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -35,6 +38,25 @@ class Handler extends \Illuminate\Foundation\Exceptions\Handler
         TokenMismatchException::class,
     ];
 
+    protected $severity = [
+        E_ERROR => LogLevel::ERROR,
+        E_CORE_ERROR => LogLevel::ERROR,
+        E_COMPILE_ERROR => LogLevel::ERROR,
+        E_USER_ERROR => LogLevel::ERROR,
+        E_RECOVERABLE_ERROR => LogLevel::ERROR,
+
+        E_WARNING => LogLevel::WARNING,
+        E_CORE_WARNING => LogLevel::WARNING,
+        E_COMPILE_WARNING => LogLevel::WARNING,
+        E_USER_WARNING => LogLevel::WARNING,
+
+        E_NOTICE => LogLevel::NOTICE,
+        E_USER_NOTICE => LogLevel::NOTICE,
+
+        E_DEPRECATED => LogLevel::NOTICE,
+        E_USER_DEPRECATED => LogLevel::NOTICE,
+    ];
+
     /**
      * Get the default context variables for logging.
      *
@@ -49,6 +71,15 @@ class Handler extends \Illuminate\Foundation\Exceptions\Handler
         } catch (\Throwable) {
             return [];
         }
+    }
+
+    public function report(\Throwable $e): void
+    {
+        if (! config('app.debug')) {
+            return; // logging disabled
+        }
+
+        parent::report($e);
     }
 
     /**
@@ -77,6 +108,34 @@ class Handler extends \Illuminate\Foundation\Exceptions\Handler
             return $this->finalizeRenderedResponse($request, $response, $e);
         }
 
-        return $this->renderExceptionResponse($request, $e);
+        if (config('app.show_ignition') && app()->has(ExceptionRenderer::class)) {
+            return new Response(
+                app(ExceptionRenderer::class)->render($e),
+                $this->isHttpException($e) ? $e->getStatusCode() : 500,
+                $this->isHttpException($e) ? $e->getHeaders() : [],
+            );
+        }
+
+        if ($this->isHttpException($e)) {
+            return $this->renderHttpException($e);
+        }
+
+        // Never render a Laravel/Symfony error page — hand off to WordPress.
+        throw $e;
+    }
+
+    /**
+     * Map the exception to a log level.
+     *
+     * @param  \Throwable  $e
+     * @return \Psr\Log\LogLevel::*
+     */
+    protected function mapLogLevel(Throwable $e)
+    {
+        if ($e instanceof \ErrorException) {
+            return $this->severity[$e->getSeverity()] ?? LogLevel::ERROR;
+        }
+
+        return parent::mapLogLevel($e);
     }
 }

@@ -1,0 +1,11 @@
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: always
+    - when: never
+
+stages:
+  - review
+
+include:
+  - component: $CI_SERVER_FQDN/gitlab-ci-cd-test/automated-code-review/ai-code-review@~latest

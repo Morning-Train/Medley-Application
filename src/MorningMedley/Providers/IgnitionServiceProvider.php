@@ -17,11 +17,15 @@ namespace MorningMedley\Application\Providers;
     {
         public function register(): void
         {
+            if (! config('app.show_ignition')) {
+                return;
+            }
+
             parent::register();
             $this->app->make(Ignition::class)->addCustomHtmlToHead("
 <style>
     #app{position: absolute; top:0; right:0;bottom:0;left:0;z-index:999999}
-    #app, html.dark body{background-color:#061d1e;} 
+    #app, html.dark body{background-color:#061d1e;}
     html.dark .\~bg-body{background-color:#061d1e; box-shadow: 0 3px 32px #0000000a}
     html.dark .\~text-indigo-600{color:#ddffd7}
     html.dark .\~bg-white{background-color: rgb(31 55 53)}

@@ -1,8 +1,6 @@
 <?php
 
-use Monolog\Handler\NullHandler;
-use Monolog\Handler\StreamHandler;
-use Monolog\Handler\SyslogUdpHandler;
+$debugLogPath = (defined('WP_DEBUG_LOG') && is_string(WP_DEBUG_LOG)) ? WP_DEBUG_LOG : 'wp-content/debug.log';
 
 return [
 
@@ -56,15 +54,19 @@ return [
 
         'debug' => [
             'driver' => 'single',
-            'path' => (defined('WP_DEBUG_LOG') && is_string(WP_DEBUG_LOG))
-                ? ABSPATH . WP_DEBUG_LOG
-                : ABSPATH . "wp-content/debug-" . substr(md5(env('APP_NAME', 'laravel')), 0, 12) . ".log",
+            'path' => ABSPATH . $debugLogPath,
             'level' => env('LOG_LEVEL', 'debug'),
         ],
 
         // Requires package "bugsnag/bugsnag-laravel"
         'bugsnag' => [
             'driver' => 'bugsnag',
+        ],
+
+        // Fallback logger (used when the configured stack can't be built).
+        // Point it at the same file so nothing ends up in storage/logs/debug.log.
+        'emergency' => [
+            'path' => ABSPATH . $debugLogPath,
         ],
     ],
 

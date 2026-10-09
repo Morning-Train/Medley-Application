@@ -235,9 +235,14 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
 
         // false lets PHP's standard handling continue. That displays errors on screen,
         // and it is what terminates the script on E_USER_ERROR.
-        $continues = $this->isWarning($level) || $this->isNotice($level) || $this->isDeprecation($level);
+        $carriesOn = $this->isWarning($level) || $this->isNotice($level) || $this->isDeprecation($level);
 
-        return ! $continues || config('app.debug') ? false : null;
+        if (! $carriesOn) {
+            return false;
+        }
+
+        // PHP carries on after warnings, notices and deprecations. Show them if errors are shown.
+        return config('app.debug') ? false : null;
     }
 
     /**

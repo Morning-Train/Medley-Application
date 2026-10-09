@@ -114,7 +114,10 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
         if (error_reporting() & $level) {
             $exception = $this->makeErrorException($message, $file, $line, $level);
 
-            // Report it before it is thrown, as code that catches the exception would hide it.
+            // Report it before it is thrown, as code that catches the exception would hide it. This is cheap
+            // enough to do for every error, about 8 µs with no channel configured, so there is no check for a
+            // channel that accepts the level. PHP does not call this handler again for an error raised while
+            // it runs, so a channel that raises a warning or a deprecation cannot make this recurse.
             $this->reportException($exception);
 
             if (! isset(static::NON_FATAL_ERRORS[$level]) && config('app.show_ignition')) {

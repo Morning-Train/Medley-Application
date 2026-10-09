@@ -26,6 +26,11 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
      *
      * Handing it to WordPress by rethrowing it raises a fatal error, which would
      * otherwise bring us back here through the shutdown handler and report it twice.
+     *
+     * It is never reset on purpose. PHP ends the process once the exception handler has run, so
+     * there is no second uncaught exception to handle. Exceptions in a queue worker are caught by
+     * the worker and reported through the exception handler, not through this method. Every
+     * bootstrap creates a new instance, so the flag starts out false in tests too.
      */
     protected bool $handledException = false;
 

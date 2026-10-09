@@ -38,6 +38,13 @@ class Handler extends \Illuminate\Foundation\Exceptions\Handler
         TokenMismatchException::class,
     ];
 
+    /**
+     * Report an exception object once, even if it is reported and then thrown.
+     *
+     * @var bool
+     */
+    protected $withoutDuplicates = true;
+
     protected $severity = [
         E_ERROR => LogLevel::ERROR,
         E_CORE_ERROR => LogLevel::ERROR,

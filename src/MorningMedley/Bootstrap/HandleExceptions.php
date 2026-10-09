@@ -58,7 +58,10 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
     }
 
     /**
-     * Report PHP deprecations, or convert PHP errors to ErrorException instances.
+     * Report PHP errors, and let PHP and WordPress keep their normal handling of them.
+     *
+     * Deprecations go to the deprecations logger. Warnings and notices are reported, not thrown,
+     * as PHP carries on after them. Other levels are reported, and thrown when Ignition is shown.
      *
      * @param  int  $level
      * @param  string  $message
@@ -80,7 +83,16 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
         } elseif ($this->isNotice($level)) {
             $this->handleNoticeError($message, $file, $line, $level);
         } elseif (error_reporting() & $level) {
-            throw new ErrorException($message, 0, $level, $file, $line);
+            // E_USER_ERROR and the like end the request anyway. Always report them, as code that
+            // catches the exception would otherwise hide them. When errors are shown with
+            // Ignition, also throw the same exception, so they get the error page. Otherwise PHP ends it.
+            $exception = new ErrorException($message, 0, $level, $file, $line);
+
+            $this->reportException($exception);
+
+            if (config('app.show_ignition')) {
+                throw $exception;
+            }
         }
 
         // Everything is reported, but PHP and WordPress keep their normal handling.
@@ -140,9 +152,6 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
     /**
      * Report an error without throwing it.
      *
-     * Bails out if logging is unavailable, otherwise a failing report would
-     * exit(1) a console command.
-     *
      * @param  string  $message
      * @param  string  $file
      * @param  int  $line
@@ -150,6 +159,20 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
      * @return void
      */
     protected function reportError($message, $file, $line, $level)
+    {
+        $this->reportException(new ErrorException($message, 0, $level, $file, $line));
+    }
+
+    /**
+     * Report an error exception without throwing it.
+     *
+     * Bails out if logging is unavailable, otherwise a failing report would
+     * exit(1) a console command.
+     *
+     * @param  \ErrorException  $exception
+     * @return void
+     */
+    protected function reportException(ErrorException $exception)
     {
         try {
             static::$app->make(LogManager::class);
@@ -160,8 +183,7 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
         static::$reservedMemory = null;
 
         try {
-            $this->getExceptionHandler()
-                ->report(new ErrorException($message, 0, $level, $file, $line));
+            $this->getExceptionHandler()->report($exception);
         } catch (Exception) {
             $exceptionHandlerFailed = true;
         }

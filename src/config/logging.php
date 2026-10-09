@@ -44,8 +44,8 @@ return [
     */
 
     'channels' => [
-        // No channel logs to a file: PHP and WordPress write the log file themselves. A site adds the
-        // destinations it wants to this stack, for example 'bugsnag'.
+        // The stack does not log to a file: PHP and WordPress write the log file themselves. A site adds
+        // the destinations it wants to this stack, for example 'bugsnag'.
         //
         // Medley sends every kind of PHP problem to the stack. A channel chooses which ones it gets
         // with its 'level', which means that level and above:

@@ -237,7 +237,7 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
         // and it is what terminates the script on E_USER_ERROR.
         $continues = $this->isWarning($level) || $this->isNotice($level) || $this->isDeprecation($level);
 
-        return ! $continues || config('app.debug_display') ? false : null;
+        return ! $continues || config('app.debug') ? false : null;
     }
 
     /**

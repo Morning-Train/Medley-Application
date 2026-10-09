@@ -1,9 +1,9 @@
 <?php
 
 $env = \wp_get_environment_type();
-$debug = defined('WP_DEBUG') && (bool) WP_DEBUG;
-$debugLog = $debug && defined('WP_DEBUG_LOG') && (bool) WP_DEBUG_LOG;
-$debugDisplay = $debug && defined('WP_DEBUG_DISPLAY') && (bool) WP_DEBUG_DISPLAY;
+$wpDebug = defined('WP_DEBUG') && (bool) WP_DEBUG;
+$display = $wpDebug && defined('WP_DEBUG_DISPLAY') && (bool) WP_DEBUG_DISPLAY;
+$log = $wpDebug && defined('WP_DEBUG_LOG') && (bool) WP_DEBUG_LOG;
 
 return [
     'env' => $env,
@@ -11,15 +11,13 @@ return [
     // Install Medley's error and exception handlers. Set to false to leave PHP and WordPress in charge.
     'handle_exceptions' => env('HANDLE_EXCEPTIONS', true),
 
-    // WP_DEBUG: WordPress reports notices and deprecations too, so they reach the log.
-    'debug' => $debug,
+    // WP_DEBUG and WP_DEBUG_DISPLAY: errors are shown. This is what Laravel means by debug, and it
+    // decides if error pages include the exception and its trace, so it is off when display is off.
+    'debug' => $display,
 
-    // WP_DEBUG_LOG: write reported errors to debug.log.
-    'debug_log' => $debugLog,
-
-    // WP_DEBUG_DISPLAY: errors are displayed.
-    'debug_display' => $debugDisplay,
+    // WP_DEBUG and WP_DEBUG_LOG: write reported errors to debug.log.
+    'debug_log' => $log,
 
     // Render errors with Ignition. Only ever on locally.
-    'show_ignition' => $env === 'local' && $debugDisplay,
+    'show_ignition' => $env === 'local' && $display,
 ];

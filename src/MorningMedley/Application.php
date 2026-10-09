@@ -175,16 +175,6 @@ class Application extends \Illuminate\Foundation\Application
         );
     }
 
-    /**
-     * Determine if the application is running with debug mode enabled.
-     *
-     * @return bool
-     */
-    public function hasDebugModeEnabled()
-    {
-        return (bool) $this['config']->get('app.debug') ?? (defined('WP_DEBUG') && WP_DEBUG == true);
-    }
-
     protected function bootProvider(ServiceProvider $provider)
     {
         parent::bootProvider($provider);

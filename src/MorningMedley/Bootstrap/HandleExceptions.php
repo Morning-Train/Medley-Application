@@ -13,6 +13,13 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
     protected $defaultExceptionHandler = null;
 
     /**
+     * The error handler that was registered before ours.
+     *
+     * @var callable|null
+     */
+    protected $previousErrorHandler = null;
+
+    /**
      * Bootstrap the given application.
      *
      * @param  \Illuminate\Contracts\Foundation\Application  $app
@@ -32,6 +39,7 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
             });
         }
 
+        $this->previousErrorHandler = $this->currentErrorHandler();
 
         // Laravel forces error_reporting(-1) and display_errors=Off. Keep what WordPress
         // configured, so WP_DEBUG and WP_DEBUG_DISPLAY keep controlling those.
@@ -42,6 +50,11 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
 
         error_reporting($errorReporting);
         ini_set('display_errors', $displayErrors);
+
+        // We write everything to debug.log ourselves, so PHP's own logging would only duplicate it.
+        if ($this->logsToDebugFile($app)) {
+            ini_set('log_errors', '0');
+        }
     }
 
     /**
@@ -51,7 +64,7 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
      * @param  string  $message
      * @param  string  $file
      * @param  int  $line
-     * @return void
+     * @return bool|null false lets PHP's standard error handling continue, anything else ends it
      *
      * @throws \ErrorException
      */
@@ -69,6 +82,59 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
         } elseif (error_reporting() & $level) {
             throw new ErrorException($message, 0, $level, $file, $line);
         }
+
+        // Everything is reported, but PHP and WordPress keep their normal handling.
+        return $this->forwardError($level, $message, $file, $line);
+    }
+
+    /**
+     * Determine if the default log channel writes to debug.log.
+     */
+    protected function logsToDebugFile(Application $app): bool
+    {
+        $config = $app['config'];
+
+        if (! $config->get('app.debug_log')) {
+            return false;
+        }
+
+        $default = $config->get('logging.default');
+        $channels = $config->get("logging.channels.{$default}.channels", [$default]);
+
+        return in_array('debug', (array) $channels, true);
+    }
+
+    /**
+     * Get the currently registered error handler without changing it.
+     */
+    protected function currentErrorHandler(): ?callable
+    {
+        $handler = set_error_handler(static fn () => false);
+        restore_error_handler();
+
+        return $handler;
+    }
+
+    /**
+     * Hand the error on to the previous handler, or to PHP, so WordPress and PHP behave as usual.
+     *
+     * @param  int  $level
+     * @param  string  $message
+     * @param  string  $file
+     * @param  int  $line
+     * @return bool|null
+     */
+    protected function forwardError($level, $message, $file, $line)
+    {
+        if ($this->previousErrorHandler) {
+            return ($this->previousErrorHandler)($level, $message, $file, $line);
+        }
+
+        // false lets PHP's standard handling continue. That displays errors on screen,
+        // and it is what terminates the script on E_USER_ERROR.
+        $continues = $this->isWarning($level) || $this->isNotice($level) || $this->isDeprecation($level);
+
+        return ! $continues || config('app.debug_display') ? false : null;
     }
 
     /**

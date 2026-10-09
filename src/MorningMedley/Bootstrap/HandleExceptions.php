@@ -61,11 +61,6 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
         ini_set('display_errors', $displayErrors);
 
         $this->labelWarningsForBugsnag($app);
-
-        // We write everything to debug.log ourselves, so PHP's own logging would only duplicate it.
-        if ($this->logsToDebugFile($app)) {
-            ini_set('log_errors', '0');
-        }
     }
 
     /**
@@ -196,23 +191,6 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
     }
 
     /**
-     * Determine if the default log channel writes to debug.log.
-     */
-    protected function logsToDebugFile(Application $app): bool
-    {
-        $config = $app['config'];
-
-        if (! $config->get('app.debug_log')) {
-            return false;
-        }
-
-        $default = $config->get('logging.default');
-        $channels = $config->get("logging.channels.{$default}.channels", [$default]);
-
-        return in_array('debug', (array) $channels, true);
-    }
-
-    /**
      * Get the currently registered error handler without changing it.
      */
     protected function currentErrorHandler(): ?callable
@@ -238,16 +216,9 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
             return ($this->previousErrorHandler)($level, $message, $file, $line);
         }
 
-        // false lets PHP's standard handling continue. That displays errors on screen,
-        // and it is what terminates the script on E_USER_ERROR.
-        $carriesOn = $this->isWarning($level) || $this->isNotice($level) || $this->isDeprecation($level);
-
-        if (! $carriesOn) {
-            return false;
-        }
-
-        // PHP carries on after warnings, notices and deprecations. Show them if errors are shown.
-        return config('app.debug') ? false : null;
+        // false lets PHP's standard handling continue. That writes the error to the log file, shows
+        // it when errors are displayed and ends the script on E_USER_ERROR, as WordPress configured.
+        return false;
     }
 
     /**

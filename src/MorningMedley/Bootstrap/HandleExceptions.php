@@ -20,6 +20,14 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
     protected $previousErrorHandler = null;
 
     /**
+     * Whether an uncaught exception has already been handled.
+     *
+     * Handing it to WordPress by rethrowing it raises a fatal error, which would
+     * otherwise bring us back here through the shutdown handler and report it twice.
+     */
+    protected bool $handledException = false;
+
+    /**
      * Bootstrap the given application.
      *
      * @param  \Illuminate\Contracts\Foundation\Application  $app
@@ -55,6 +63,23 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
         if ($this->logsToDebugFile($app)) {
             ini_set('log_errors', '0');
         }
+    }
+
+    /**
+     * Handle an uncaught exception, once.
+     *
+     * @param  \Throwable  $e
+     * @return void
+     */
+    public function handleException(Throwable $e)
+    {
+        if ($this->handledException) {
+            return;
+        }
+
+        $this->handledException = true;
+
+        parent::handleException($e);
     }
 
     /**

@@ -72,6 +72,40 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
     }
 
     /**
+     * Report an error without throwing it.
+     *
+     * Bails out if logging is unavailable, otherwise a failing report would
+     * exit(1) a console command.
+     *
+     * @param  string  $message
+     * @param  string  $file
+     * @param  int  $line
+     * @param  int  $level
+     * @return void
+     */
+    protected function reportError($message, $file, $line, $level)
+    {
+        try {
+            static::$app->make(LogManager::class);
+        } catch (Exception) {
+            return;
+        }
+
+        static::$reservedMemory = null;
+
+        try {
+            $this->getExceptionHandler()
+                ->report(new ErrorException($message, 0, $level, $file, $line));
+        } catch (Exception) {
+            $exceptionHandlerFailed = true;
+        }
+
+        if (static::$app->runningInConsole() && ($exceptionHandlerFailed ?? false)) {
+            exit(1);
+        }
+    }
+
+    /**
      * Determine if the error level is a warning.
      *
      * @param  int  $level
@@ -94,7 +128,9 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
     }
 
     /**
-     * Throw warnings in debug mode, otherwise report them.
+     * Report a warning without throwing.
+     *
+     * PHP and WordPress carry on after a warning, so we do as well.
      *
      * @param  string  $message
      * @param  string  $file
@@ -102,39 +138,14 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
      * @param  int  $level
      * @return void
      */
-    public function handleWarningError($message, $file, $line, $level = E_DEPRECATED)
+    public function handleWarningError($message, $file, $line, $level = E_WARNING)
     {
         // Respect @-suppression and error_reporting settings
         if (! (error_reporting() & $level)) {
             return;
         }
 
-        if (config('app.debug')) {
-            throw new ErrorException($message, 0, $level, $file, $line);
-        }
-
-        // We still want to report, but bail out if logging is unavailable,
-        // otherwise a failing report would exit(1) a console command.
-        try {
-            static::$app->make(LogManager::class);
-        } catch (Exception) {
-            return;
-        }
-
-        static::$reservedMemory = null;
-
-        try {
-            $this->getExceptionHandler()
-                ->report(new ErrorException($message, 0, $level, $file, $line));
-        } catch (Exception) {
-            $exceptionHandlerFailed = true;
-        }
-
-        if (static::$app->runningInConsole()) {
-            if ($exceptionHandlerFailed ?? false) {
-                exit(1);
-            }
-        }
+        $this->reportError($message, $file, $line, $level);
     }
 
     /**
@@ -153,12 +164,6 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
             return;
         }
 
-        static::$reservedMemory = null;
-
-        try {
-            $this->getExceptionHandler()
-                ->report(new ErrorException($message, 0, $level, $file, $line));
-        } catch (Exception) {
-        }
+        $this->reportError($message, $file, $line, $level);
     }
 }

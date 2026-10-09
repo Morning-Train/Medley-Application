@@ -1,8 +1,5 @@
 <?php
 
-$debugLog = (defined('WP_DEBUG') && WP_DEBUG) && (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG);
-$debugLogPath = (defined('WP_DEBUG_LOG') && is_string(WP_DEBUG_LOG)) ? WP_DEBUG_LOG : 'wp-content/debug.log';
-
 return [
 
     /*
@@ -47,22 +44,12 @@ return [
     */
 
     'channels' => [
+        // No channel logs to a file: PHP and WordPress write the log file themselves. A site adds the
+        // destinations it wants to this stack, for example 'bugsnag'.
         'stack' => [
             'driver' => 'stack',
-            'channels' => ['debug'],
+            'channels' => ['null'],
             'ignore_exceptions' => false,
-        ],
-
-        // Errors are always reported, but only written to disk when debug logging is on.
-        'debug' => $debugLog ? [
-            'driver' => 'single',
-            'path' => ABSPATH . $debugLogPath,
-            'level' => env('LOG_LEVEL', 'debug'),
-        ] : [
-            // NoopHandler, not NullHandler: NullHandler counts as "handled" and would stop
-            // the rest of the stack, so channels after this one (Bugsnag) would never run.
-            'driver' => 'monolog',
-            'handler' => \Monolog\Handler\NoopHandler::class,
         ],
 
         'null' => [
@@ -70,11 +57,11 @@ return [
             'handler' => \Monolog\Handler\NullHandler::class,
         ],
 
-        // Defined here instead of letting Laravel create it on the first deprecation.
-        // Goes to the debug channel (the file, when WP_DEBUG_LOG is on) so plugin deprecations stay out of Bugsnag.
+        // Defined here instead of letting Laravel create it on the first deprecation. PHP logs
+        // deprecations itself, so this is null by default.
         'deprecations' => [
             'driver' => 'stack',
-            'channels' => [env('LOG_DEPRECATIONS_CHANNEL', 'debug')],
+            'channels' => [env('LOG_DEPRECATIONS_CHANNEL', 'null')],
             'ignore_exceptions' => false,
         ],
 
@@ -83,10 +70,10 @@ return [
             'driver' => 'bugsnag',
         ],
 
-        // Fallback logger (used when the configured stack can't be built).
-        // Point it at the same file so nothing ends up in storage/logs/debug.log.
+        // Fallback logger (used when the configured stack can't be built). It writes to the PHP or
+        // web server log, instead of a file in the theme's storage folder.
         'emergency' => [
-            'path' => ABSPATH . $debugLogPath,
+            'path' => 'php://stderr',
         ],
     ],
 

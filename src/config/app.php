@@ -3,7 +3,6 @@
 $env = \wp_get_environment_type();
 $wpDebug = defined('WP_DEBUG') && (bool) WP_DEBUG;
 $display = $wpDebug && defined('WP_DEBUG_DISPLAY') && (bool) WP_DEBUG_DISPLAY;
-$log = $wpDebug && defined('WP_DEBUG_LOG') && (bool) WP_DEBUG_LOG;
 
 return [
     'env' => $env,
@@ -14,9 +13,6 @@ return [
     // WP_DEBUG and WP_DEBUG_DISPLAY: errors are shown. This is what Laravel means by debug, and it
     // decides if error pages include the exception and its trace, so it is off when display is off.
     'debug' => $display,
-
-    // WP_DEBUG and WP_DEBUG_LOG: write reported errors to debug.log.
-    'debug_log' => $log,
 
     // Render errors with Ignition. Only ever on locally.
     'show_ignition' => $env === 'local' && $display,

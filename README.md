@@ -9,8 +9,10 @@ An Illuminate Application for Morningmedley.
   defined, but it is not in the stack. A site that lists `debug` in its own `channels.stack` must change it, for example
   to `bugsnag`. With a channel that does not exist, Laravel falls back to the emergency logger, which now writes to
   `php://stderr`.
-- **`app.debug` is now `WP_DEBUG && WP_DEBUG_DISPLAY`**, where 0.4.8 used `WP_DEBUG && WP_DEBUG_LOG`. It decides if
-  error pages include the exception and its trace. `app.debug_log` is removed.
+- **`app.debug` is now `WP_DEBUG && WP_DEBUG_DISPLAY`**, where 0.4.8 used `WP_DEBUG && WP_DEBUG_LOG`. It is what
+  Laravel reads as "show details": error pages with the exception and its trace, the Laravel exception renderer,
+  Ignition's runnable solutions, the health check and a missing Mix file, which throw instead of being reported. They
+  now show details only when errors are displayed. `app.debug_log` is removed.
 - **`HandleExceptions` lost `handleWarningError()`, `handleNoticeError()` and `handleDeprecationError()`.**
   `handleError()` covers every level.
 

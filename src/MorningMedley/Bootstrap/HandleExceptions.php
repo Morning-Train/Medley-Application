@@ -6,6 +6,8 @@ use ErrorException;
 use Exception;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Log\LogManager;
+use MorningMedley\Application\Exceptions\PhpNotice;
+use MorningMedley\Application\Exceptions\PhpWarning;
 use Throwable;
 
 class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
@@ -59,6 +61,8 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
         error_reporting($errorReporting);
         ini_set('display_errors', $displayErrors);
 
+        $this->labelWarningsForBugsnag($app);
+
         // We write everything to debug.log ourselves, so PHP's own logging would only duplicate it.
         if ($this->logsToDebugFile($app)) {
             ini_set('log_errors', '0');
@@ -111,7 +115,7 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
             // E_USER_ERROR and the like end the request anyway. Always report them, as code that
             // catches the exception would otherwise hide them. When errors are shown with
             // Ignition, also throw the same exception, so they get the error page. Otherwise PHP ends it.
-            $exception = new ErrorException($message, 0, $level, $file, $line);
+            $exception = $this->makeErrorException($message, $file, $line, $level);
 
             $this->reportException($exception);
 
@@ -122,6 +126,33 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
 
         // Everything is reported, but PHP and WordPress keep their normal handling.
         return $this->forwardError($level, $message, $file, $line);
+    }
+
+    /**
+     * Show reported warnings and notices in Bugsnag as "Log warning" and "Log notice".
+     *
+     * That is how Bugsnag titles log messages. Only the title changes: the event keeps
+     * its real file, line and stack trace, so grouping stays per origin.
+     */
+    protected function labelWarningsForBugsnag(Application $app): void
+    {
+        $app->booted(function () use ($app) {
+            if (! $app->bound('bugsnag')) {
+                return;
+            }
+
+            $app->make('bugsnag')->registerCallback(function ($report) {
+                $name = match ($report->getName()) {
+                    PhpWarning::class => 'Log warning',
+                    PhpNotice::class => 'Log notice',
+                    default => null,
+                };
+
+                if ($name !== null) {
+                    $report->setName($name);
+                }
+            });
+        });
     }
 
     /**
@@ -175,6 +206,29 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
     }
 
     /**
+     * Create the exception an error is reported as.
+     *
+     * Warnings and notices get their own class, so reporting tools label them
+     * as such and do not group them with real errors.
+     *
+     * @param  string  $message
+     * @param  string  $file
+     * @param  int  $line
+     * @param  int  $level
+     * @return \ErrorException
+     */
+    protected function makeErrorException($message, $file, $line, $level): ErrorException
+    {
+        $class = match (true) {
+            $this->isWarning($level) => PhpWarning::class,
+            $this->isNotice($level) => PhpNotice::class,
+            default => ErrorException::class,
+        };
+
+        return new $class($message, 0, $level, $file, $line);
+    }
+
+    /**
      * Report an error without throwing it.
      *
      * @param  string  $message
@@ -185,7 +239,7 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
      */
     protected function reportError($message, $file, $line, $level)
     {
-        $this->reportException(new ErrorException($message, 0, $level, $file, $line));
+        $this->reportException($this->makeErrorException($message, $file, $line, $level));
     }
 
     /**

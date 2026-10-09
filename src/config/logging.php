@@ -65,6 +65,19 @@ return [
             'handler' => \Monolog\Handler\NoopHandler::class,
         ],
 
+        'null' => [
+            'driver' => 'monolog',
+            'handler' => \Monolog\Handler\NullHandler::class,
+        ],
+
+        // Defined here instead of letting Laravel create it on the first deprecation.
+        // Goes to the debug channel (the file, when WP_DEBUG_LOG is on) so plugin deprecations stay out of Bugsnag.
+        'deprecations' => [
+            'driver' => 'stack',
+            'channels' => [env('LOG_DEPRECATIONS_CHANNEL', 'debug')],
+            'ignore_exceptions' => false,
+        ],
+
         // Requires package "bugsnag/bugsnag-laravel"
         'bugsnag' => [
             'driver' => 'bugsnag',

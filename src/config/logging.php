@@ -63,6 +63,13 @@ return [
             'ignore_exceptions' => false,
         ],
 
+        'single' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/laravel.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'replace_placeholders' => true,
+        ],
+
         'null' => [
             'driver' => 'monolog',
             'handler' => \Monolog\Handler\NullHandler::class,

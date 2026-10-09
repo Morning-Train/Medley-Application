@@ -57,14 +57,6 @@ return [
             'handler' => \Monolog\Handler\NullHandler::class,
         ],
 
-        // Defined here instead of letting Laravel create it on the first deprecation. PHP logs
-        // deprecations itself, so this is null by default.
-        'deprecations' => [
-            'driver' => 'stack',
-            'channels' => [env('LOG_DEPRECATIONS_CHANNEL', 'null')],
-            'ignore_exceptions' => false,
-        ],
-
         // Requires package "bugsnag/bugsnag-laravel"
         'bugsnag' => [
             'driver' => 'bugsnag',

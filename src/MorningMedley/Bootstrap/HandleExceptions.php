@@ -6,6 +6,7 @@ use ErrorException;
 use Exception;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Log\LogManager;
+use MorningMedley\Application\Exceptions\PhpDeprecation;
 use MorningMedley\Application\Exceptions\PhpNotice;
 use MorningMedley\Application\Exceptions\PhpWarning;
 use Throwable;
@@ -120,7 +121,9 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
     }
 
     /**
-     * Reports a deprecation to the "deprecations" logger.
+     * Report a deprecation to the channels in the stack, like a warning or a notice.
+     *
+     * PHP logs it itself, so it is not written to a log file.
      *
      * @param  string  $message
      * @param  string  $file
@@ -135,7 +138,7 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
             return;
         }
 
-        parent::handleDeprecationError($message, $file, $line);
+        $this->reportError($message, $file, $line, $level);
     }
 
     // Custom methods
@@ -164,7 +167,8 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
     }
 
     /**
-     * Show reported warnings and notices in Bugsnag as "Log warning" and "Log notice".
+     * Show reported warnings, notices and deprecations in Bugsnag as "Log warning", "Log notice"
+     * and "Log deprecation".
      *
      * That is how Bugsnag titles log messages. Only the title changes: the event keeps
      * its real file, line and stack trace, so grouping stays per origin.
@@ -180,6 +184,7 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
                 $name = match ($report->getName()) {
                     PhpWarning::class => 'Log warning',
                     PhpNotice::class => 'Log notice',
+                    PhpDeprecation::class => 'Log deprecation',
                     default => null,
                 };
 
@@ -224,7 +229,7 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
     /**
      * Create the exception an error is reported as.
      *
-     * Warnings and notices get their own class, so reporting tools label them
+     * Warnings, notices and deprecations get their own class, so reporting tools label them
      * as such and do not group them with real errors.
      *
      * @param  string  $message
@@ -238,6 +243,7 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
         $class = match (true) {
             $this->isWarning($level) => PhpWarning::class,
             $this->isNotice($level) => PhpNotice::class,
+            $this->isDeprecation($level) => PhpDeprecation::class,
             default => ErrorException::class,
         };
 

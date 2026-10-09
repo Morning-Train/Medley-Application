@@ -73,15 +73,6 @@ class Handler extends \Illuminate\Foundation\Exceptions\Handler
         }
     }
 
-    public function report(\Throwable $e): void
-    {
-        if (! config('app.debug')) {
-            return; // logging disabled
-        }
-
-        parent::report($e);
-    }
-
     /**
      * Render an exception into an HTTP response.
      *

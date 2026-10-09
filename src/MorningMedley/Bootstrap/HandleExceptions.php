@@ -21,7 +21,7 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
     public function bootstrap(Application $app)
     {
         // Allow bypass
-        if (! $app['config']->get('app.debug') && ! $app['config']->get('app.show_ignition')) {
+        if (! $app['config']->get('app.handle_exceptions', true)) {
             return;
         }
 
@@ -32,7 +32,16 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
             });
         }
 
+
+        // Laravel forces error_reporting(-1) and display_errors=Off. Keep what WordPress
+        // configured, so WP_DEBUG and WP_DEBUG_DISPLAY keep controlling those.
+        $errorReporting = error_reporting();
+        $displayErrors = ini_get('display_errors');
+
         parent::bootstrap($app);
+
+        error_reporting($errorReporting);
+        ini_set('display_errors', $displayErrors);
     }
 
     /**

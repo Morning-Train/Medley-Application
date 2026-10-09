@@ -1,5 +1,6 @@
 <?php
 
+$debugLog = (defined('WP_DEBUG') && WP_DEBUG) && (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG);
 $debugLogPath = (defined('WP_DEBUG_LOG') && is_string(WP_DEBUG_LOG)) ? WP_DEBUG_LOG : 'wp-content/debug.log';
 
 return [
@@ -52,10 +53,16 @@ return [
             'ignore_exceptions' => false,
         ],
 
-        'debug' => [
+        // Errors are always reported, but only written to disk when debug logging is on.
+        'debug' => $debugLog ? [
             'driver' => 'single',
             'path' => ABSPATH . $debugLogPath,
             'level' => env('LOG_LEVEL', 'debug'),
+        ] : [
+            // NoopHandler, not NullHandler: NullHandler counts as "handled" and would stop
+            // the rest of the stack, so channels after this one (Bugsnag) would never run.
+            'driver' => 'monolog',
+            'handler' => \Monolog\Handler\NoopHandler::class,
         ],
 
         // Requires package "bugsnag/bugsnag-laravel"

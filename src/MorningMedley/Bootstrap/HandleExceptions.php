@@ -120,6 +120,27 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
     }
 
     /**
+     * Reports a deprecation to the "deprecations" logger.
+     *
+     * @param  string  $message
+     * @param  string  $file
+     * @param  int  $line
+     * @param  int  $level
+     * @return void
+     */
+    public function handleDeprecationError($message, $file, $line, $level = E_DEPRECATED)
+    {
+        // Respect @-suppression and error_reporting settings
+        if (! (error_reporting() & $level)) {
+            return;
+        }
+
+        parent::handleDeprecationError($message, $file, $line);
+    }
+
+    // Custom methods
+
+    /**
      * Send a reported throwable to Ray, if it is an exception or a fatal error.
      *
      * Warnings, notices and deprecations are reported as ErrorExceptions, but nothing was
@@ -306,25 +327,6 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
     protected function isNotice($level)
     {
         return in_array($level, [E_NOTICE, E_USER_NOTICE]);
-    }
-
-    /**
-     * Reports a deprecation to the "deprecations" logger.
-     *
-     * @param  string  $message
-     * @param  string  $file
-     * @param  int  $line
-     * @param  int  $level
-     * @return void
-     */
-    public function handleDeprecationError($message, $file, $line, $level = E_DEPRECATED)
-    {
-        // Respect @-suppression and error_reporting settings
-        if (! (error_reporting() & $level)) {
-            return;
-        }
-
-        parent::handleDeprecationError($message, $file, $line);
     }
 
     /**

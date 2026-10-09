@@ -97,10 +97,7 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
     public function handleError($level, $message, $file = '', $line = 0)
     {
         if ($this->isDeprecation($level)) {
-            // Respect @-suppression and error_reporting settings
-            if (error_reporting() & $level) {
-                $this->handleDeprecationError($message, $file, $line, $level);
-            }
+            $this->handleDeprecationError($message, $file, $line, $level);
         } elseif ($this->isWarning($level)) {
             $this->handleWarningError($message, $file, $line, $level);
         } elseif ($this->isNotice($level)) {
@@ -309,6 +306,25 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
     protected function isNotice($level)
     {
         return in_array($level, [E_NOTICE, E_USER_NOTICE]);
+    }
+
+    /**
+     * Reports a deprecation to the "deprecations" logger.
+     *
+     * @param  string  $message
+     * @param  string  $file
+     * @param  int  $line
+     * @param  int  $level
+     * @return void
+     */
+    public function handleDeprecationError($message, $file, $line, $level = E_DEPRECATED)
+    {
+        // Respect @-suppression and error_reporting settings
+        if (! (error_reporting() & $level)) {
+            return;
+        }
+
+        parent::handleDeprecationError($message, $file, $line);
     }
 
     /**

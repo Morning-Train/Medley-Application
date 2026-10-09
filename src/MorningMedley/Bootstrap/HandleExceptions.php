@@ -13,6 +13,23 @@ use Throwable;
 
 class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
 {
+    /**
+     * The levels that PHP carries on after, and the exception each is reported as.
+     *
+     * Reporting tools such as Bugsnag then label them as a warning, a notice or a deprecation,
+     * and do not group them with real errors.
+     *
+     * @var array<int, class-string<\ErrorException>>
+     */
+    protected const NON_FATAL_ERRORS = [
+        E_WARNING => PhpWarning::class,
+        E_USER_WARNING => PhpWarning::class,
+        E_NOTICE => PhpNotice::class,
+        E_USER_NOTICE => PhpNotice::class,
+        E_DEPRECATED => PhpDeprecation::class,
+        E_USER_DEPRECATED => PhpDeprecation::class,
+    ];
+
     protected $defaultExceptionHandler = null;
 
     /**
@@ -84,8 +101,9 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
     /**
      * Report PHP errors, and let PHP and WordPress keep their normal handling of them.
      *
-     * Deprecations go to the deprecations logger. Warnings and notices are reported, not thrown,
-     * as PHP carries on after them. Other levels are reported, and thrown when Ignition is shown.
+     * Warnings, notices and deprecations are reported, not thrown, as PHP carries on after them.
+     * Other levels, such as E_USER_ERROR, end the request anyway. They are also thrown when
+     * errors are shown with Ignition, so they get the error page.
      *
      * @param  int  $level
      * @param  string  $message
@@ -97,48 +115,19 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
      */
     public function handleError($level, $message, $file = '', $line = 0)
     {
-        if ($this->isDeprecation($level)) {
-            $this->handleDeprecationError($message, $file, $line, $level);
-        } elseif ($this->isWarning($level)) {
-            $this->handleWarningError($message, $file, $line, $level);
-        } elseif ($this->isNotice($level)) {
-            $this->handleNoticeError($message, $file, $line, $level);
-        } elseif (error_reporting() & $level) {
-            // E_USER_ERROR and the like end the request anyway. Always report them, as code that
-            // catches the exception would otherwise hide them. When errors are shown with
-            // Ignition, also throw the same exception, so they get the error page. Otherwise PHP ends it.
+        // Respect @-suppression and error_reporting settings
+        if (error_reporting() & $level) {
             $exception = $this->makeErrorException($message, $file, $line, $level);
 
+            // Report it before it is thrown, as code that catches the exception would hide it.
             $this->reportException($exception);
 
-            if (config('app.show_ignition')) {
+            if (! isset(static::NON_FATAL_ERRORS[$level]) && config('app.show_ignition')) {
                 throw $exception;
             }
         }
 
-        // Everything is reported, but PHP and WordPress keep their normal handling.
         return $this->forwardError($level, $message, $file, $line);
-    }
-
-    /**
-     * Report a deprecation to the channels in the stack, like a warning or a notice.
-     *
-     * PHP logs it itself, so it is not written to a log file.
-     *
-     * @param  string  $message
-     * @param  string  $file
-     * @param  int  $line
-     * @param  int  $level
-     * @return void
-     */
-    public function handleDeprecationError($message, $file, $line, $level = E_DEPRECATED)
-    {
-        // Respect @-suppression and error_reporting settings
-        if (! (error_reporting() & $level)) {
-            return;
-        }
-
-        $this->reportError($message, $file, $line, $level);
     }
 
     // Custom methods
@@ -154,10 +143,7 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
     {
         if ($app['config']->get('app.send_exceptions_to_ray', false) && function_exists('ray')) {
             $app->make(\Illuminate\Contracts\Debug\ExceptionHandler::class)->reportable(function (\Throwable $e) {
-                if (
-                    $e instanceof ErrorException &&
-                    ($this->isWarning($e->getSeverity()) || $this->isNotice($e->getSeverity()) || $this->isDeprecation($e->getSeverity()))
-                ) {
+                if ($e instanceof ErrorException && isset(static::NON_FATAL_ERRORS[$e->getSeverity()])) {
                     return;
                 }
 
@@ -229,9 +215,6 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
     /**
      * Create the exception an error is reported as.
      *
-     * Warnings, notices and deprecations get their own class, so reporting tools label them
-     * as such and do not group them with real errors.
-     *
      * @param  string  $message
      * @param  string  $file
      * @param  int  $line
@@ -240,28 +223,9 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
      */
     protected function makeErrorException($message, $file, $line, $level): ErrorException
     {
-        $class = match (true) {
-            $this->isWarning($level) => PhpWarning::class,
-            $this->isNotice($level) => PhpNotice::class,
-            $this->isDeprecation($level) => PhpDeprecation::class,
-            default => ErrorException::class,
-        };
+        $class = static::NON_FATAL_ERRORS[$level] ?? ErrorException::class;
 
         return new $class($message, 0, $level, $file, $line);
-    }
-
-    /**
-     * Report an error without throwing it.
-     *
-     * @param  string  $message
-     * @param  string  $file
-     * @param  int  $line
-     * @param  int  $level
-     * @return void
-     */
-    protected function reportError($message, $file, $line, $level)
-    {
-        $this->reportException($this->makeErrorException($message, $file, $line, $level));
     }
 
     /**
@@ -294,65 +258,4 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
         }
     }
 
-    /**
-     * Determine if the error level is a warning.
-     *
-     * @param  int  $level
-     * @return bool
-     */
-    protected function isWarning($level)
-    {
-        return in_array($level, [E_WARNING, E_USER_WARNING]);
-    }
-
-    /**
-     * Determine if the error level is a notice.
-     *
-     * @param  int  $level
-     * @return bool
-     */
-    protected function isNotice($level)
-    {
-        return in_array($level, [E_NOTICE, E_USER_NOTICE]);
-    }
-
-    /**
-     * Report a warning without throwing.
-     *
-     * PHP and WordPress carry on after a warning, so we do as well.
-     *
-     * @param  string  $message
-     * @param  string  $file
-     * @param  int  $line
-     * @param  int  $level
-     * @return void
-     */
-    public function handleWarningError($message, $file, $line, $level = E_WARNING)
-    {
-        // Respect @-suppression and error_reporting settings
-        if (! (error_reporting() & $level)) {
-            return;
-        }
-
-        $this->reportError($message, $file, $line, $level);
-    }
-
-    /**
-     * Report a notice without throwing.
-     *
-     * @param  string  $message
-     * @param  string  $file
-     * @param  int  $line
-     * @param  int  $level
-     * @return void
-     */
-    public function handleNoticeError($message, $file, $line, $level = E_NOTICE)
-    {
-        // Respect @-suppression and error_reporting settings
-        if (! (error_reporting() & $level)) {
-            return;
-        }
-
-        $this->reportError($message, $file, $line, $level);
-    }
 }

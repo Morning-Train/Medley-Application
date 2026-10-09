@@ -42,13 +42,7 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
             return;
         }
 
-        // For easy ray
-        if ($app['config']->get('app.send_exceptions_to_ray', false) && function_exists('ray')) {
-            $app->make(\Illuminate\Contracts\Debug\ExceptionHandler::class)->reportable(function (\Throwable $e) {
-                ray()->exception($e);
-            });
-        }
-
+        $this->handleRayExceptions($app);
         $this->previousErrorHandler = $this->currentErrorHandler();
 
         // Laravel forces error_reporting(-1) and display_errors=Off. Keep what WordPress
@@ -126,6 +120,29 @@ class HandleExceptions extends \Illuminate\Foundation\Bootstrap\HandleExceptions
 
         // Everything is reported, but PHP and WordPress keep their normal handling.
         return $this->forwardError($level, $message, $file, $line);
+    }
+
+    /**
+     * Send a reported throwable to Ray, if it is an exception or a fatal error.
+     *
+     * Warnings, notices and deprecations are reported as ErrorExceptions, but nothing was
+     * thrown, and Ray paints every exception item red. Those stay out of Ray, so a red item
+     * means something actually went wrong. They are still logged and sent to Bugsnag.
+     */
+    protected function handleRayExceptions(Application $app): void
+    {
+        if ($app['config']->get('app.send_exceptions_to_ray', false) && function_exists('ray')) {
+            $app->make(\Illuminate\Contracts\Debug\ExceptionHandler::class)->reportable(function (\Throwable $e) {
+                if (
+                    $e instanceof ErrorException &&
+                    ($this->isWarning($e->getSeverity()) || $this->isNotice($e->getSeverity()) || $this->isDeprecation($e->getSeverity()))
+                ) {
+                    return;
+                }
+
+                ray()->exception($e);
+            });
+        }
     }
 
     /**

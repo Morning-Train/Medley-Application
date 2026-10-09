@@ -46,6 +46,17 @@ return [
     'channels' => [
         // No channel logs to a file: PHP and WordPress write the log file themselves. A site adds the
         // destinations it wants to this stack, for example 'bugsnag'.
+        //
+        // Medley sends every kind of PHP problem to the stack. A channel chooses which ones it gets
+        // with its 'level', which means that level and above:
+        //
+        //   exception, fatal error, E_USER_ERROR   error
+        //   warning                                warning
+        //   notice, deprecation                    notice
+        //
+        // 'level' => 'error' gives a channel the errors only, 'warning' adds the warnings, and 'notice'
+        // gives it everything. The bugsnag channel sets its level with logger_notify_level in
+        // config/bugsnag.php.
         'stack' => [
             'driver' => 'stack',
             'channels' => ['null'],

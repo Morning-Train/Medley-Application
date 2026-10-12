@@ -55,8 +55,9 @@ return [
         //   notice, deprecation                    notice
         //
         // 'level' => 'error' gives a channel the errors only, 'warning' adds the warnings, and 'notice'
-        // gives it everything. The bugsnag channel sets its level with logger_notify_level in
-        // config/bugsnag.php.
+        // gives it everything. Bugsnag gets warning and up by default: set BUGSNAG_LOGGER_LEVEL, or
+        // logger_notify_level in config/bugsnag.php, to change it.
+
         'stack' => [
             'driver' => 'stack',
             'channels' => ['null'],

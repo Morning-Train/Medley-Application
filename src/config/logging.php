@@ -1,7 +1,5 @@
 <?php
 
-$debugLogPath = (defined('WP_DEBUG_LOG') && is_string(WP_DEBUG_LOG)) ? WP_DEBUG_LOG : 'wp-content/debug.log';
-
 return [
 
     /*
@@ -46,16 +44,36 @@ return [
     */
 
     'channels' => [
+        // The stack does not log to a file: PHP and WordPress write the log file themselves. A site adds
+        // the destinations it wants to this stack, for example 'bugsnag'.
+        //
+        // Medley sends every kind of PHP problem to the stack. A channel chooses which ones it gets
+        // with its 'level', which means that level and above:
+        //
+        //   exception, fatal error, E_USER_ERROR   error
+        //   warning                                warning
+        //   notice, deprecation                    notice
+        //
+        // 'level' => 'error' gives a channel the errors only, 'warning' adds the warnings, and 'notice'
+        // gives it everything. Bugsnag gets warning and up by default: set BUGSNAG_LOGGER_LEVEL, or
+        // logger_notify_level in config/bugsnag.php, to change it.
+
         'stack' => [
             'driver' => 'stack',
-            'channels' => ['debug'],
+            'channels' => ['null'],
             'ignore_exceptions' => false,
         ],
 
-        'debug' => [
+        'single' => [
             'driver' => 'single',
-            'path' => ABSPATH . $debugLogPath,
+            'path' => storage_path('logs/laravel.log'),
             'level' => env('LOG_LEVEL', 'debug'),
+            'replace_placeholders' => true,
+        ],
+
+        'null' => [
+            'driver' => 'monolog',
+            'handler' => \Monolog\Handler\NullHandler::class,
         ],
 
         // Requires package "bugsnag/bugsnag-laravel"
@@ -63,10 +81,10 @@ return [
             'driver' => 'bugsnag',
         ],
 
-        // Fallback logger (used when the configured stack can't be built).
-        // Point it at the same file so nothing ends up in storage/logs/debug.log.
+        // Fallback logger (used when the configured stack can't be built). It writes to the PHP or
+        // web server log, instead of a file in the theme's storage folder.
         'emergency' => [
-            'path' => ABSPATH . $debugLogPath,
+            'path' => 'php://stderr',
         ],
     ],
 
